@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate } from 'react-router-dom';
-import { Session } from '@supabase/supabase-js';
-import { supabase } from './supabaseClient';
+import { User } from 'firebase/auth';
+import { auth } from './firebaseConfig';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import Dashboard from './pages/Dashboard';
@@ -11,43 +11,32 @@ import Settings from './pages/Settings';
 import Analytics from './pages/Analytics';
 import Onboarding from './pages/Onboarding';
 import Pricing from './pages/Pricing';
-import Register from './pages/Register';
+import Register from './components/Register';
 import Login from './components/Login';
-import Auth from './pages/Auth';
 
 const App: React.FC = () => {
-  const [session, setSession] = useState<Session | null>(null);
+  const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-    });
-
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
-
-    return () => subscription.unsubscribe();
+    const unsubscribe = auth.onAuthStateChanged(setUser);
+    return () => unsubscribe();
   }, []);
 
   return (
     <Router>
       <div className="flex flex-col min-h-screen">
-        <Header session={session} />
+        <Header user={user} />
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<Onboarding />} />
-            <Route path="/dashboard" element={session ? <Dashboard /> : <Navigate to="/login" />} />
-            <Route path="/generate" element={session ? <ContentGenerator /> : <Navigate to="/login" />} />
-            <Route path="/templates" element={session ? <Templates /> : <Navigate to="/login" />} />
-            <Route path="/settings" element={session ? <Settings /> : <Navigate to="/login" />} />
-            <Route path="/analytics" element={session ? <Analytics /> : <Navigate to="/login" />} />
-            <Route path="/pricing" element={<Pricing />} />
-            <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
-            <Route path="/auth" element={<Auth />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
+            <Route path="/generate" element={user ? <ContentGenerator /> : <Navigate to="/login" />} />
+            <Route path="/templates" element={user ? <Templates /> : <Navigate to="/login" />} />
+            <Route path="/settings" element={user ? <Settings /> : <Navigate to="/login" />} />
+            <Route path="/analytics" element={user ? <Analytics /> : <Navigate to="/login" />} />
+            <Route path="/pricing" element={<Pricing />} />
           </Routes>
         </main>
         <Footer />

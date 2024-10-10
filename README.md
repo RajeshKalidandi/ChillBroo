@@ -5,19 +5,19 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 ## Current Progress
 
 - Set up the project structure with React, TypeScript, and Vite
-- Implemented user authentication using Supabase
+- Implemented user authentication using Firebase
 - Created an onboarding process for new users
 - Developed a dashboard with quick action cards and statistics
 - Implemented backend server with Express.js
 - Integrated GitHub trending topics for content recommendations
-- Set up Supabase database for storing user profiles and preferences
+- Migrated from Supabase to Firebase for authentication and database
 
 ## Tech Stack
 
 - Frontend: React with TypeScript, Vite
 - Backend: Node.js with Express
-- Database: Supabase
-- Authentication: Supabase Auth
+- Database: Firebase Firestore
+- Authentication: Firebase Authentication
 - Styling: Tailwind CSS
 - API Integrations: Wikipedia API, GitHub Trending (web scraping)
 - NLP: natural library
@@ -42,15 +42,13 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 3. Set up environment variables:
    Create a `.env` file in the root directory and add the following:
    ```bash
-   VITE_SUPABASE_URL=your_supabase_project_url
-   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
+   VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
+   VITE_FIREBASE_APP_ID=your_firebase_app_id
    VITE_API_URL=http://localhost:3001
-   ```
-
-   Create a `.env` file in the `server` directory and add:
-   ```bash
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
    ```
 
 4. Start the development server:
@@ -71,7 +69,7 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 - `src/`: Frontend React application
   - `components/`: Reusable React components
   - `pages/`: Main page components
-  - `supabaseClient.ts`: Supabase client configuration
+  - `firebaseConfig.ts`: Firebase configuration
 - `server/`: Backend Node.js server
   - `src/index.ts`: Main server file with API endpoints
 
@@ -82,6 +80,8 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 - Develop an analytics dashboard
 - Integrate with more social media platforms
 - Enhance the recommendation engine with machine learning
+- Update backend to use Firebase Admin SDK
+- Implement user profile management with Firestore
 
 ## Contributing
 

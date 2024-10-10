@@ -36,10 +36,45 @@ app.use(express.json());
 const tokenizer = new natural.WordTokenizer();
 const TfIdf = natural.TfIdf;
 
-const supabase = createClient(
-  process.env.SUPABASE_URL as string,
-  process.env.SUPABASE_SERVICE_ROLE_KEY as string
-);
+const supabaseUrl = process.env.SUPABASE_URL;
+const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseServiceRoleKey) {
+  console.error('Missing Supabase environment variables');
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+
+// User registration
+app.post('/api/register', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email,
+      password,
+      email_confirm: true
+    });
+    if (error) throw error;
+    res.status(200).json({ message: 'User registered successfully', user: data.user });
+  } catch (error) {
+    console.error('Registration error:', error);
+    res.status(500).json({ error: 'Failed to register user' });
+  }
+});
+
+// User login
+app.post('/api/login', async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    res.status(200).json({ message: 'User logged in successfully', session: data.session });
+  } catch (error) {
+    console.error('Login error:', error);
+    res.status(500).json({ error: 'Failed to log in' });
+  }
+});
 
 app.post('/api/generate-framework', async (req, res) => {
   try {
@@ -118,6 +153,14 @@ app.post('/api/store-user-data', async (req, res) => {
 
     console.log('Received user data:', { name, company, industry, platforms, contentType, userId });
 
+    // Test Supabase connection
+    const { data: testData, error: testError } = await supabase.from('user_profiles').select('count', { count: 'exact' });
+    if (testError) {
+      console.error('Error testing Supabase connection:', testError);
+      throw testError;
+    }
+    console.log('Supabase connection test successful:', testData);
+
     const { data, error } = await supabase
       .from('user_profiles')
       .upsert({
@@ -137,7 +180,7 @@ app.post('/api/store-user-data', async (req, res) => {
     res.status(200).json({ message: 'User data stored successfully', data });
   } catch (error) {
     console.error('Error storing user data:', error);
-    res.status(500).json({ error: 'Failed to store user data' });
+    res.status(500).json({ error: 'Failed to store user data', details: error });
   }
 });
 

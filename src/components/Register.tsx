@@ -1,51 +1,24 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
-import axios from 'axios';
+import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
+import { useNavigate } from 'react-router-dom';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
-  const location = useLocation();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: email,
-        password: password,
-      });
-
-      if (error) throw error;
-
-      if (data.user) {
-        console.log('User registered successfully:', data.user);
-        
-        const tempUserId = location.state?.tempUserId;
-        if (tempUserId) {
-          try {
-            const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-            await axios.post(`${serverUrl}/api/update-user-data`, {
-              tempUserId,
-              newUserId: data.user.id
-            });
-            console.log('User data updated successfully');
-          } catch (updateError) {
-            console.error('Error updating user data:', updateError);
-          }
-        }
-
-        navigate('/dashboard');
-      }
+      await createUserWithEmailAndPassword(auth, email, password);
+      navigate('/dashboard');
     } catch (error) {
       if (error instanceof Error) {
-        setError(`Registration failed: ${error.message}`);
-        console.error('Detailed registration error:', error);
+        setError(error.message);
       } else {
-        setError('An unexpected error occurred during registration');
-        console.error('Unexpected error during registration:', error);
+        setError('An unexpected error occurred');
       }
     }
   };
@@ -77,7 +50,7 @@ const Register: React.FC = () => {
             className="w-full px-3 py-2 border rounded"
           />
         </div>
-        <button type="submit" className="w-full bg-green-500 text-white py-2 rounded hover:bg-green-600">
+        <button type="submit" className="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">
           Register
         </button>
       </form>

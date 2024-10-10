@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -11,12 +12,14 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.auth.signInWithPassword({ email, password });
-      if (error) throw error;
+      await signInWithEmailAndPassword(auth, email, password);
       navigate('/dashboard');
     } catch (error) {
-      setError('Failed to log in. Please check your credentials.');
-      console.error(error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('An unexpected error occurred');
+      }
     }
   };
 

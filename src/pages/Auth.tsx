@@ -1,7 +1,10 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 const Auth: React.FC = () => {
+  const location = useLocation();
+  const userData = location.state?.userData;
+
   return (
     <div className="max-w-md mx-auto mt-8 text-center">
       <h1 className="text-3xl font-bold mb-6">Welcome to ChillBroo</h1>
@@ -15,6 +18,7 @@ const Auth: React.FC = () => {
         </Link>
         <Link
           to="/register"
+          state={{ userData }}
           className="block w-full bg-green-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-600"
         >
           Register

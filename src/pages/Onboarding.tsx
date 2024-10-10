@@ -70,24 +70,8 @@ const Onboarding: React.FC = () => {
       if (step < 3) {
         setStep(step + 1);
       } else {
-        try {
-          const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-          const tempUserId = userId || `temp_${Date.now()}`;
-          const response = await axios.post(`${serverUrl}/api/store-user-data`, { ...userData, userId: tempUserId });
-          console.log('Server response:', response.data);
-          
-          if (userId) {
-            navigate('/dashboard');
-          } else {
-            navigate('/register', { state: { tempUserId } });
-          }
-        } catch (error) {
-          console.error('Error storing user data:', error);
-          if (axios.isAxiosError(error)) {
-            console.error('Axios error details:', error.response?.data);
-          }
-          setErrors({ ...errors, submit: 'Failed to store user data. Please try again.' });
-        }
+        // Instead of storing data, we'll navigate to the auth page
+        navigate('/auth', { state: { userData } });
       }
     }
   };
