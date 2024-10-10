@@ -1,42 +1,45 @@
-import React from 'react';
-import { Link, useLocation } from 'react-router-dom';
-
-interface LocationState {
-  userData?: {
-    name: string;
-    company: string;
-    industry: string;
-    platforms: string[];
-    contentType: string;
-  };
-}
+import React, { useState } from 'react';
+import { useLocation, Navigate } from 'react-router-dom';
+import Login from '../components/Login';
+import Register from '../components/Register';
+import { motion } from 'framer-motion';
+import { useAuth } from '../components/AuthContext';
 
 const Auth: React.FC = () => {
+  const [isLogin, setIsLogin] = useState(true);
   const location = useLocation();
-  const { userData } = location.state as LocationState || {};
+  const userData = location.state?.userData;
+  const { user } = useAuth();
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  const toggleAuthMode = () => {
+    setIsLogin(!isLogin);
+  };
 
   return (
-    <div className="max-w-md mx-auto mt-8 text-center">
-      <h1 className="text-3xl font-bold mb-6">Welcome to ChillBroo</h1>
-      {userData ? (
-        <p className="mb-8">Thank you for completing the onboarding process. Please login or register to continue.</p>
-      ) : (
-        <p className="mb-8">Please login or register to access ChillBroo.</p>
-      )}
-      <div className="space-y-4">
-        <Link
-          to="/login"
-          className="block w-full bg-blue-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-blue-600"
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
         >
-          Login
-        </Link>
-        <Link
-          to="/register"
-          state={{ userData }}
-          className="block w-full bg-green-500 text-white py-2 px-4 rounded-md font-semibold hover:bg-green-600"
-        >
-          Register
-        </Link>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            {isLogin ? 'Sign in to your account' : 'Create a new account'}
+          </h2>
+        </motion.div>
+        {isLogin ? <Login /> : <Register userData={userData} />}
+        <div className="text-center">
+          <button
+            onClick={toggleAuthMode}
+            className="font-medium text-indigo-600 hover:text-indigo-500"
+          >
+            {isLogin ? 'Need an account? Sign up' : 'Already have an account? Sign in'}
+          </button>
+        </div>
       </div>
     </div>
   );

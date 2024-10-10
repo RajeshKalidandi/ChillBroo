@@ -1,0 +1,43 @@
+{
+    "settings": {
+      "title": "Settings",
+      "profile": "Profile",
+      "displayName": "Display Name",
+      "email": "Email",
+      "updateSuccess": "Settings updated successfully",
+      "notifications": "Notifications",
+      "notifications.email": "Email Notifications",
+      "notifications.push": "Push Notifications",
+      "notifications.sms": "SMS Notifications",
+      "theme": "Theme",
+      "language": "Language",
+      "privacy": "Privacy"
+    },
+    "errors": {
+      "noUser": "No authenticated user found",
+      "updateFailed": "Failed to update settings",
+      "required": "This field is required",
+      "minLength": "Minimum length is {{count}} characters"
+    },
+    "common": {
+      "loading": "Loading...",
+      "save": "Save"
+    },
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "languages": {
+      "en": "English",
+      "es": "Español",
+      "fr": "Français"
+    },
+    "privacy": {
+      "profileVisibility": "Profile Visibility",
+      "activityVisibility": "Activity Visibility",
+      "public": "Public",
+      "private": "Private",
+      "friends": "Friends Only"
+    }
+  }

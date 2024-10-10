@@ -1,0 +1,43 @@
+{
+  "settings": {
+    "title": "Paramètres",
+    "profile": "Profil",
+    "displayName": "Nom d'affichage",
+    "email": "E-mail",
+    "updateSuccess": "Paramètres mis à jour avec succès",
+    "notifications": "Notifications",
+    "notifications.email": "Notifications par e-mail",
+    "notifications.push": "Notifications push",
+    "notifications.sms": "Notifications SMS",
+    "theme": "Thème",
+    "language": "Langue",
+    "privacy": "Confidentialité"
+  },
+  "errors": {
+    "noUser": "Aucun utilisateur authentifié trouvé",
+    "updateFailed": "Échec de la mise à jour des paramètres",
+    "required": "Ce champ est obligatoire",
+    "minLength": "La longueur minimale est de {{count}} caractères"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "save": "Enregistrer"
+  },
+  "themes": {
+    "light": "Clair",
+    "dark": "Sombre",
+    "system": "Système"
+  },
+  "languages": {
+    "en": "English",
+    "es": "Español",
+    "fr": "Français"
+  },
+  "privacy": {
+    "profileVisibility": "Visibilité du profil",
+    "activityVisibility": "Visibilité de l'activité",
+    "public": "Public",
+    "private": "Privé",
+    "friends": "Amis seulement"
+  }
+}
