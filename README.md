@@ -15,8 +15,11 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - 🔑 Keyword suggestions and analysis
 - 📈 Personalized content recommendations
 - 🔐 Secure user authentication with Firebase
-- 📉 Basic analytics dashboard
+- 📉 Advanced analytics dashboard
+- 🔗 Social media platform integration
+- 👤 User profile and settings management
 - 🎨 Responsive and user-friendly interface
+- 📝 Template management system
 
 ## 🛠️ Tech Stack
 
@@ -27,6 +30,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - Styling: Tailwind CSS
 - AI Integration: Mistral AI
 - State Management: React Hooks
+- Charts: Recharts
 
 ## 🚀 Getting Started
 
@@ -75,18 +79,22 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ Content generation using Mistral AI
 - ✅ Dynamic content framework selection
 - ✅ Keyword generation and recommendations
-- ✅ Basic analytics implementation
+- ✅ Advanced analytics implementation
+- ✅ Social media platform integration
+- ✅ User settings and preferences
 - ✅ Responsive design with Tailwind CSS
+- ✅ Template management system
+- ✅ Content preview for different social media platforms
+- ✅ Error handling and user feedback improvements
 
 ## 🔜 Next Steps
 
-- [ ] Enhance AI-powered content generation with more customization options
-- [ ] Implement template management system
-- [ ] Develop advanced analytics dashboard
 - [ ] Integrate with social media platforms for direct posting
-- [ ] Implement user profile management and settings
 - [ ] Add collaborative features for team accounts
 - [ ] Implement rate limiting and usage tracking
+- [ ] Enhance AI-powered content generation with more customization options
+- [ ] Implement A/B testing for generated content
+- [ ] Add support for more languages and localization
 
 ## 🤝 Contributing
 

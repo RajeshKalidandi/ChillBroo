@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { auth } from '../firebaseConfig';
 import ContentFramework from '../components/ContentFramework';
 import ContentRecommendations from '../components/ContentRecommendations';
+import SocialMediaPreview from '../components/SocialMediaPreview';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -15,6 +16,9 @@ const ContentGenerator: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const [selectedFramework, setSelectedFramework] = useState('');
+  const [targetAudience, setTargetAudience] = useState('');
+  const [callToAction, setCallToAction] = useState('');
+  const [keywords, setKeywords] = useState('');
 
   const selectFramework = async () => {
     setIsLoading(true);
@@ -59,7 +63,16 @@ const ContentGenerator: React.FC = () => {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${idToken}`
         },
-        body: JSON.stringify({ prompt, platform, tone, length, selectedFramework }),
+        body: JSON.stringify({ 
+          prompt, 
+          platform, 
+          tone, 
+          length, 
+          selectedFramework,
+          targetAudience,
+          callToAction,
+          keywords: keywords.split(',').map(k => k.trim())
+        }),
       });
 
       if (!response.ok) {
@@ -157,6 +170,39 @@ const ContentGenerator: React.FC = () => {
         </select>
       </div>
       <div className="mb-6">
+        <label htmlFor="targetAudience" className="block mb-2 font-semibold">Target Audience</label>
+        <input
+          type="text"
+          id="targetAudience"
+          value={targetAudience}
+          onChange={(e) => setTargetAudience(e.target.value)}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="e.g. Millennials interested in tech"
+        />
+      </div>
+      <div className="mb-6">
+        <label htmlFor="callToAction" className="block mb-2 font-semibold">Call to Action</label>
+        <input
+          type="text"
+          id="callToAction"
+          value={callToAction}
+          onChange={(e) => setCallToAction(e.target.value)}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="e.g. Sign up for our newsletter"
+        />
+      </div>
+      <div className="mb-6">
+        <label htmlFor="keywords" className="block mb-2 font-semibold">Keywords (comma-separated)</label>
+        <input
+          type="text"
+          id="keywords"
+          value={keywords}
+          onChange={(e) => setKeywords(e.target.value)}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          placeholder="e.g. AI, social media, marketing"
+        />
+      </div>
+      <div className="mb-6">
         <label htmlFor="prompt" className="block mb-2 font-semibold">Content Idea</label>
         <textarea
           id="prompt"
@@ -198,6 +244,7 @@ const ContentGenerator: React.FC = () => {
           <div className="bg-gray-100 p-4 rounded">
             <p className="whitespace-pre-wrap">{generatedContent}</p>
           </div>
+          <SocialMediaPreview platform={platform} content={generatedContent} />
           <button
             onClick={saveContent}
             className="mt-4 bg-green-500 text-white p-2 rounded font-semibold hover:bg-green-600 transition duration-300"

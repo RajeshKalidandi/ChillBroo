@@ -1,34 +1,136 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { PlusCircle, Edit2, Trash2 } from 'lucide-react'
+import { auth } from '../firebaseConfig';
+import axios from 'axios';
+import { showErrorToast } from '../utils/toast';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface Template {
-  id: number;
+  id: string;
   name: string;
   description: string;
   content: string;
+  platform: string;
 }
 
 const Templates: React.FC = () => {
-  const [templates, setTemplates] = useState<Template[]>([
-    { id: 1, name: 'Product Launch', description: 'Announce a new product', content: 'Exciting news! We\'re thrilled to announce the launch of our latest product, [Product Name]. [Brief description]. Visit our website to learn more and be among the first to experience it!' },
-    { id: 2, name: 'Weekly Tip', description: 'Share a helpful tip', content: 'Here\'s your #WeeklyTip: [Insert tip here]. How do you implement this in your daily routine? Share your thoughts in the comments!' },
-    { id: 3, name: 'Customer Spotlight', description: 'Highlight a customer success story', content: 'Customer Spotlight: [Customer Name] achieved [specific result] using our [product/service]. Learn how they did it: [link] #CustomerSuccess' },
-  ])
+  const [templates, setTemplates] = useState<Template[]>([]);
+  const [predefinedTemplates, setPredefinedTemplates] = useState<Template[]>([]);
+  const [newTemplate, setNewTemplate] = useState({ name: '', description: '', content: '', platform: 'twitter' });
+  const [isAdding, setIsAdding] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState('');
 
-  const [newTemplate, setNewTemplate] = useState({ name: '', description: '', content: '' })
-  const [isAdding, setIsAdding] = useState(false)
+  useEffect(() => {
+    fetchTemplates();
+    fetchPredefinedTemplates();
+  }, []);
 
-  const handleAddTemplate = () => {
-    if (newTemplate.name && newTemplate.description && newTemplate.content) {
-      setTemplates([...templates, { ...newTemplate, id: Date.now() }])
-      setNewTemplate({ name: '', description: '', content: '' })
-      setIsAdding(false)
+  const fetchTemplates = async () => {
+    setIsLoading(true);
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      const response = await axios.get(`${API_URL}/api/templates`, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+      setTemplates(response.data.templates);
+    } catch (err) {
+      console.error('Error fetching templates:', err);
+      showErrorToast('Failed to fetch templates. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
-  }
+  };
 
-  const handleDeleteTemplate = (id: number) => {
-    setTemplates(templates.filter(template => template.id !== id))
-  }
+  const fetchPredefinedTemplates = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/content-frameworks`);
+      setPredefinedTemplates(response.data.frameworks.map((framework: any) => ({
+        id: framework.name,
+        name: framework.name,
+        description: framework.description,
+        content: framework.structure,
+        platform: 'all'
+      })));
+    } catch (err) {
+      console.error('Error fetching predefined templates:', err);
+      showErrorToast('Failed to fetch predefined templates. Please try again.');
+    }
+  };
+
+  const handleAddTemplate = async () => {
+    if (newTemplate.name && newTemplate.description && newTemplate.content) {
+      try {
+        const idToken = await auth.currentUser?.getIdToken();
+        await axios.post(`${API_URL}/api/templates`, newTemplate, {
+          headers: { 'Authorization': `Bearer ${idToken}` }
+        });
+        await fetchTemplates();
+        setNewTemplate({ name: '', description: '', content: '', platform: 'twitter' });
+        setIsAdding(false);
+      } catch (err) {
+        console.error('Error adding template:', err);
+        showErrorToast('Failed to add template. Please try again.');
+      }
+    }
+  };
+
+  const handleDeleteTemplate = async (id: string) => {
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      await axios.delete(`${API_URL}/api/templates/${id}`, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+      await fetchTemplates();
+    } catch (err) {
+      console.error('Error deleting template:', err);
+      showErrorToast('Failed to delete template. Please try again.');
+    }
+  };
+
+  const renderPreview = (content: string, platform: string) => {
+    switch (platform.toLowerCase()) {
+      case 'twitter':
+        return (
+          <div className="bg-blue-100 p-4 rounded-lg">
+            <h3 className="font-bold text-blue-500">Twitter Preview</h3>
+            <p className="mt-2">{content.slice(0, 280)}</p>
+          </div>
+        );
+      case 'facebook':
+        return (
+          <div className="bg-indigo-100 p-4 rounded-lg">
+            <h3 className="font-bold text-indigo-500">Facebook Preview</h3>
+            <p className="mt-2">{content}</p>
+          </div>
+        );
+      case 'instagram':
+        return (
+          <div className="bg-pink-100 p-4 rounded-lg">
+            <h3 className="font-bold text-pink-500">Instagram Preview</h3>
+            <p className="mt-2">{content}</p>
+          </div>
+        );
+      case 'linkedin':
+        return (
+          <div className="bg-blue-200 p-4 rounded-lg">
+            <h3 className="font-bold text-blue-700">LinkedIn Preview</h3>
+            <p className="mt-2">{content}</p>
+          </div>
+        );
+      default:
+        return (
+          <div className="bg-gray-100 p-4 rounded-lg">
+            <h3 className="font-bold text-gray-700">Preview</h3>
+            <p className="mt-2">{content}</p>
+          </div>
+        );
+    }
+  };
+
+  if (isLoading) return <div>Loading templates...</div>;
+  if (error) return <div className="text-red-500">{error}</div>;
 
   return (
     <div className="space-y-6">
@@ -68,6 +170,16 @@ const Templates: React.FC = () => {
             onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
             className="w-full p-2 mb-4 border rounded h-32 resize-none"
           />
+          <select
+            value={newTemplate.platform}
+            onChange={(e) => setNewTemplate({ ...newTemplate, platform: e.target.value })}
+            className="w-full p-2 mb-4 border rounded"
+          >
+            <option value="twitter">Twitter</option>
+            <option value="facebook">Facebook</option>
+            <option value="instagram">Instagram</option>
+            <option value="linkedin">LinkedIn</option>
+          </select>
           <div className="flex justify-end">
             <button
               onClick={handleAddTemplate}
@@ -85,13 +197,27 @@ const Templates: React.FC = () => {
         </div>
       )}
 
+      <h2 className="text-2xl font-semibold mb-4">Predefined Templates</h2>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {predefinedTemplates.map(template => (
+          <div key={template.id} className="bg-white p-6 rounded-lg shadow-md">
+            <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
+            <p className="text-gray-600 mb-4">{template.description}</p>
+            <p className="text-sm text-gray-500 mb-4">{template.content.substring(0, 100)}...</p>
+            {renderPreview(template.content, template.platform)}
+          </div>
+        ))}
+      </div>
+
+      <h2 className="text-2xl font-semibold mb-4">Your Custom Templates</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {templates.map(template => (
           <div key={template.id} className="bg-white p-6 rounded-lg shadow-md">
             <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
             <p className="text-gray-600 mb-4">{template.description}</p>
             <p className="text-sm text-gray-500 mb-4">{template.content.substring(0, 100)}...</p>
-            <div className="flex justify-end">
+            {renderPreview(template.content, template.platform)}
+            <div className="flex justify-end mt-4">
               <button className="text-blue-500 hover:text-blue-600 mr-2">
                 <Edit2 size={20} />
               </button>

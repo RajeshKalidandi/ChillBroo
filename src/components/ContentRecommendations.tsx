@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { auth } from '../firebaseConfig';
+import { showErrorToast } from '../utils/toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -39,6 +40,7 @@ const ContentRecommendations: React.FC<ContentRecommendationsProps> = ({ userCon
     } catch (error) {
       console.error('Error fetching recommendations:', error);
       setError('Failed to fetch recommendations. Please try again.');
+      showErrorToast('Failed to fetch recommendations. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -49,7 +51,17 @@ const ContentRecommendations: React.FC<ContentRecommendationsProps> = ({ userCon
   }
 
   if (error) {
-    return <div className="mt-8 bg-white p-6 rounded-lg shadow-md text-red-500">{error}</div>;
+    return (
+      <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+        <p className="text-red-500">{error}</p>
+        <button 
+          onClick={fetchRecommendations} 
+          className="mt-4 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+        >
+          Retry
+        </button>
+      </div>
+    );
   }
 
   if (!recommendations.length) {
