@@ -1,18 +1,22 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebaseConfig';
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc } from 'firebase/firestore';
+import { collection, query, where, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
+import axios from 'axios';
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface ConnectedAccount {
   id: string;
   platform: string;
-  username: string;
+  accessToken: string;
+  refreshToken: string;
+  connectedAt: Date;
 }
 
 const SocialMediaIntegration: React.FC = () => {
   const [connectedAccounts, setConnectedAccounts] = useState<ConnectedAccount[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [newConnection, setNewConnection] = useState({ platform: '', username: '' });
 
   useEffect(() => {
     fetchConnectedAccounts();
@@ -39,28 +43,19 @@ const SocialMediaIntegration: React.FC = () => {
     }
   };
 
-  const handleConnect = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleConnect = async (platform: string) => {
     try {
       const user = auth.currentUser;
       if (!user) throw new Error('No authenticated user found');
 
-      // Simulate connection process
-      await new Promise(resolve => setTimeout(resolve, 1000));
-
-      // Add the new connection to Firestore
-      await addDoc(collection(db, 'connected_accounts'), {
-        userId: user.uid,
-        platform: newConnection.platform,
-        username: newConnection.username,
+      const idToken = await user.getIdToken();
+      const response = await axios.get(`${API_URL}/api/auth/${platform.toLowerCase()}`, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
       });
-
-      showSuccessToast(`Connected to ${newConnection.platform} successfully`);
-      setNewConnection({ platform: '', username: '' });
-      fetchConnectedAccounts();
+      window.location.href = response.data.authUrl;
     } catch (error) {
-      console.error('Error connecting account:', error);
-      showErrorToast('Failed to connect account');
+      console.error(`Error connecting to ${platform}:`, error);
+      showErrorToast(`Failed to connect to ${platform}`);
     }
   };
 
@@ -72,6 +67,26 @@ const SocialMediaIntegration: React.FC = () => {
     } catch (error) {
       console.error('Error disconnecting account:', error);
       showErrorToast('Failed to disconnect account');
+    }
+  };
+
+  const refreshToken = async (accountId: string, platform: string) => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      const idToken = await user.getIdToken();
+      const response = await axios.post(`${API_URL}/api/refresh-token/${platform.toLowerCase()}`, 
+        { accountId },
+        { headers: { 'Authorization': `Bearer ${idToken}` } }
+      );
+      const updatedAccount = response.data;
+      await updateDoc(doc(db, 'connected_accounts', accountId), updatedAccount);
+      showSuccessToast('Token refreshed successfully');
+      fetchConnectedAccounts();
+    } catch (error) {
+      console.error('Error refreshing token:', error);
+      showErrorToast('Failed to refresh token');
     }
   };
 
@@ -92,14 +107,22 @@ const SocialMediaIntegration: React.FC = () => {
             {connectedAccounts.map((account) => (
               <li key={account.id} className="flex items-center justify-between">
                 <span>
-                  {account.platform}: {account.username}
+                  {account.platform}: Connected on {new Date(account.connectedAt).toLocaleDateString()}
                 </span>
-                <button
-                  onClick={() => handleDisconnect(account.id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-                >
-                  Disconnect
-                </button>
+                <div>
+                  <button
+                    onClick={() => refreshToken(account.id, account.platform)}
+                    className="bg-blue-500 text-white px-3 py-1 rounded hover:bg-blue-600 mr-2"
+                  >
+                    Refresh Token
+                  </button>
+                  <button
+                    onClick={() => handleDisconnect(account.id)}
+                    className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+                  >
+                    Disconnect
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -108,41 +131,17 @@ const SocialMediaIntegration: React.FC = () => {
       
       <div className="bg-white p-6 rounded-lg shadow-md">
         <h3 className="text-xl font-semibold mb-4">Connect New Account</h3>
-        <form onSubmit={handleConnect} className="space-y-4">
-          <div>
-            <label htmlFor="platform" className="block mb-1">Platform</label>
-            <select
-              id="platform"
-              value={newConnection.platform}
-              onChange={(e) => setNewConnection({ ...newConnection, platform: e.target.value })}
-              className="w-full p-2 border rounded"
-              required
+        <div className="grid grid-cols-2 gap-4">
+          {['Twitter', 'Facebook', 'Instagram', 'LinkedIn'].map((platform) => (
+            <button
+              key={platform}
+              onClick={() => handleConnect(platform)}
+              className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
             >
-              <option value="">Select a platform</option>
-              <option value="Twitter">Twitter</option>
-              <option value="Facebook">Facebook</option>
-              <option value="Instagram">Instagram</option>
-              <option value="LinkedIn">LinkedIn</option>
-            </select>
-          </div>
-          <div>
-            <label htmlFor="username" className="block mb-1">Username</label>
-            <input
-              type="text"
-              id="username"
-              value={newConnection.username}
-              onChange={(e) => setNewConnection({ ...newConnection, username: e.target.value })}
-              className="w-full p-2 border rounded"
-              required
-            />
-          </div>
-          <button
-            type="submit"
-            className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
-          >
-            Connect Account
-          </button>
-        </form>
+              Connect {platform}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

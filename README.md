@@ -16,16 +16,12 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - 📈 Personalized content recommendations
 - 🔐 Secure user authentication with Firebase
 - 📉 Advanced analytics dashboard
-- 🔗 Direct posting to social media platforms
-- 👥 Collaborative features for team accounts
-- 📊 Rate limiting and usage tracking
-- 📈 Personalized content recommendations
-- 🔐 Secure user authentication with Firebase
-- 📉 Advanced analytics dashboard
-- 🔗 Social media platform integration
+- 🔗 Social media platform integration (simulated)
 - 👤 User profile and settings management
 - 🎨 Responsive and user-friendly interface
 - 📝 Template management system
+- 👥 Team collaboration features
+- ⚡ Rate limiting and usage tracking
 
 ## 🛠️ Tech Stack
 
@@ -73,35 +69,36 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - `src/`: Frontend React application
   - `components/`: Reusable React components
   - `pages/`: Main page components
+  - `utils/`: Utility functions and helpers
   - `firebaseConfig.ts`: Firebase configuration
 - `server/`: Backend Node.js server
   - `src/index.ts`: Main server file with API endpoints
+  - `src/firebaseAdmin.ts`: Firebase Admin SDK setup
 
 ## 🎯 Current Progress
 
 - ✅ User authentication with Firebase
 - ✅ Onboarding process for new users
-- ✅ Dashboard with quick action cards
+- ✅ Dashboard with quick action cards and trending topics
 - ✅ Content generation using Mistral AI
 - ✅ Dynamic content framework selection
 - ✅ Keyword generation and recommendations
 - ✅ Advanced analytics implementation
-- ✅ Social media platform integration
+- ✅ Social media platform integration (simulated)
 - ✅ User settings and preferences
 - ✅ Responsive design with Tailwind CSS
 - ✅ Template management system
 - ✅ Content preview for different social media platforms
 - ✅ Error handling and user feedback improvements
-- ✅ Integrate with social media platforms for direct posting (simulated)
-- ✅ Add collaborative features for team accounts
-- ✅ Implement rate limiting and usage tracking
+- ✅ Team collaboration features
+- ✅ Rate limiting and usage tracking
 
 ## 🔜 Next Steps
 
+- [ ] Implement real OAuth flows for social media platforms
 - [ ] Enhance AI-powered content generation with more customization options
 - [ ] Implement A/B testing for generated content
 - [ ] Add support for more languages and localization
-- [ ] Implement real OAuth flows for social media platforms
 - [ ] Develop a mobile app version
 - [ ] Implement advanced user roles and permissions
 

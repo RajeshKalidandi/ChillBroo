@@ -1,8 +1,11 @@
-import React, { useState } from 'react';
-import { auth } from '../firebaseConfig';
+import React, { useState, useEffect } from 'react';
+import { auth, db } from '../firebaseConfig';
+import { collection, addDoc, getDocs } from 'firebase/firestore';
 import ContentFramework from '../components/ContentFramework';
 import ContentRecommendations from '../components/ContentRecommendations';
 import SocialMediaPreview from '../components/SocialMediaPreview';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
+import LoadingSpinner from '../components/LoadingSpinner';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -19,6 +22,22 @@ const ContentGenerator: React.FC = () => {
   const [targetAudience, setTargetAudience] = useState('');
   const [callToAction, setCallToAction] = useState('');
   const [keywords, setKeywords] = useState('');
+  const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
+
+  useEffect(() => {
+    fetchTemplates();
+  }, []);
+
+  const fetchTemplates = async () => {
+    try {
+      const templatesSnapshot = await getDocs(collection(db, 'templates'));
+      const templatesData = templatesSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() as { name: string; content: string } }));
+      setTemplates(templatesData);
+    } catch (error) {
+      console.error('Error fetching templates:', error);
+      showErrorToast('Failed to fetch templates');
+    }
+  };
 
   const selectFramework = async () => {
     setIsLoading(true);
@@ -96,25 +115,20 @@ const ContentGenerator: React.FC = () => {
 
   const saveContent = async () => {
     try {
-      const idToken = await auth.currentUser?.getIdToken();
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/save-content`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${idToken}`
-        },
-        body: JSON.stringify({ content: generatedContent, platform }),
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      await addDoc(collection(db, 'generated_content'), {
+        userId: user.uid,
+        content: generatedContent,
+        platform,
+        createdAt: new Date()
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to save content');
-      }
-
-      console.log('Content saved successfully');
-    } catch (err) {
-      setError('Failed to save content');
-      console.error(err);
+      showSuccessToast('Content saved successfully');
+    } catch (error) {
+      console.error('Error saving content:', error);
+      showErrorToast('Failed to save content');
     }
   };
 
@@ -259,6 +273,24 @@ const ContentGenerator: React.FC = () => {
           <ContentRecommendations userContent={generatedContent} userInterests={userInterests} />
         </>
       )}
+      <div className="mb-6">
+        <label htmlFor="template" className="block mb-2 font-semibold">Use Template (Optional)</label>
+        <select
+          id="template"
+          onChange={(e) => {
+            const selectedTemplate = templates.find(t => t.id === e.target.value);
+            if (selectedTemplate) {
+              setPrompt(selectedTemplate.content);
+            }
+          }}
+          className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+        >
+          <option value="">Select a template</option>
+          {templates.map(template => (
+            <option key={template.id} value={template.id}>{template.name}</option>
+          ))}
+        </select>
+      </div>
     </div>
   );
 };

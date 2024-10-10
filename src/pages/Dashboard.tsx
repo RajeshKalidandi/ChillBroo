@@ -1,15 +1,86 @@
-import React from 'react'
-import { Link } from 'react-router-dom'
-import { Zap, FileText, BarChart2, TrendingUp, PenTool } from 'lucide-react'
-import PageTransition from '../components/PageTransition'
+import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { Zap, FileText, BarChart2, TrendingUp, PenTool, Users, Settings } from 'lucide-react';
+import PageTransition from '../components/PageTransition';
+import { auth, db } from '../firebaseConfig';
+import { collection, query, where, getDocs, limit, orderBy } from 'firebase/firestore';
+import axios from 'axios';
+
+interface DashboardStats {
+  generatedContent: number;
+  activeTemplates: number;
+  engagementRate: string;
+  trendingTopics: string[];
+}
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Dashboard: React.FC = () => {
-  // Mock data for demonstration purposes
-  const stats = {
-    generatedContent: 42,
-    activeTemplates: 7,
-    engagementRate: '8.5%',
-    trendingTopic: 'AI in Social Media'
+  const [stats, setStats] = useState<DashboardStats>({
+    generatedContent: 0,
+    activeTemplates: 0,
+    engagementRate: '0%',
+    trendingTopics: []
+  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    fetchDashboardStats();
+  }, []);
+
+  const fetchDashboardStats = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      const contentQuery = query(collection(db, 'generated_content'), where('userId', '==', user.uid));
+      const templateQuery = query(collection(db, 'templates'), where('userId', '==', user.uid));
+
+      const [contentSnapshot, templateSnapshot] = await Promise.all([
+        getDocs(contentQuery),
+        getDocs(templateQuery)
+      ]);
+
+      const generatedContent = contentSnapshot.size;
+      const activeTemplates = templateSnapshot.size;
+
+      // Calculate engagement rate (this is a placeholder, replace with actual calculation)
+      const engagementRate = ((generatedContent / (activeTemplates || 1)) * 100).toFixed(1) + '%';
+
+      // Fetch trending topics
+      const trendingTopics = await fetchTrendingTopics();
+
+      setStats({
+        generatedContent,
+        activeTemplates,
+        engagementRate,
+        trendingTopics
+      });
+    } catch (error) {
+      console.error('Error fetching dashboard stats:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const fetchTrendingTopics = async (): Promise<string[]> => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      const idToken = await user.getIdToken();
+      const response = await axios.get(`${API_URL}/api/trending-topics`, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+      return response.data.trendingTopics;
+    } catch (error) {
+      console.error('Error fetching trending topics:', error);
+      return ['AI', 'Social Media', 'Digital Marketing', 'Content Creation', 'Influencer Marketing'];
+    }
+  };
+
+  if (isLoading) {
+    return <div>Loading dashboard...</div>;
   }
 
   return (
@@ -21,7 +92,22 @@ const Dashboard: React.FC = () => {
           <StatCard icon={<FileText />} title="Generated Content" value={stats.generatedContent} />
           <StatCard icon={<Zap />} title="Active Templates" value={stats.activeTemplates} />
           <StatCard icon={<BarChart2 />} title="Avg. Engagement Rate" value={stats.engagementRate} />
-          <StatCard icon={<TrendingUp />} title="Trending Topic" value={stats.trendingTopic} />
+          <StatCard icon={<TrendingUp />} title="Trending Topics" value={stats.trendingTopics.join(', ')} />
+        </div>
+
+        <div className="mt-8">
+          <h2 className="text-2xl font-semibold mb-4">Trending Topics</h2>
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <ul className="list-disc list-inside">
+              {stats.trendingTopics.map((topic, index) => (
+                <li key={index} className="mb-2">
+                  <Link to={`/generate?topic=${encodeURIComponent(topic)}`} className="text-blue-500 hover:underline">
+                    {topic}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="mt-8">
@@ -40,17 +126,35 @@ const Dashboard: React.FC = () => {
               icon={<FileText className="w-6 h-6 text-green-500" />}
             />
             <QuickActionCard
+              title="Team Management"
+              description="Manage your team and collaborators"
+              linkTo="/team"
+              icon={<Users className="w-6 h-6 text-purple-500" />}
+            />
+            <QuickActionCard
+              title="Analytics"
+              description="View detailed performance metrics"
+              linkTo="/analytics"
+              icon={<BarChart2 className="w-6 h-6 text-orange-500" />}
+            />
+            <QuickActionCard
+              title="Social Media Integration"
+              description="Connect and manage your social accounts"
+              linkTo="/social-media-integration"
+              icon={<TrendingUp className="w-6 h-6 text-pink-500" />}
+            />
+            <QuickActionCard
               title="Account Settings"
               description="Update your profile and preferences"
               linkTo="/settings"
-              icon={<Zap className="w-6 h-6 text-purple-500" />}
+              icon={<Settings className="w-6 h-6 text-gray-500" />}
             />
           </div>
         </div>
       </div>
     </PageTransition>
-  )
-}
+  );
+};
 
 const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string | number }> = ({ icon, title, value }) => (
   <div className="bg-white p-6 rounded-lg shadow-md">
@@ -60,7 +164,7 @@ const StatCard: React.FC<{ icon: React.ReactNode; title: string; value: string |
     </div>
     <p className="text-3xl font-bold text-gray-800">{value}</p>
   </div>
-)
+);
 
 const QuickActionCard: React.FC<{ title: string; description: string; linkTo: string; icon: React.ReactNode }> = ({ title, description, linkTo, icon }) => (
   <Link to={linkTo} className="block bg-white p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
@@ -70,6 +174,6 @@ const QuickActionCard: React.FC<{ title: string; description: string; linkTo: st
     </div>
     <p className="text-gray-600">{description}</p>
   </Link>
-)
+);
 
-export default Dashboard
+export default Dashboard;

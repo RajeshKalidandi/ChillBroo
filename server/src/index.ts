@@ -7,6 +7,7 @@ import axios from 'axios';
 import cheerio from 'cheerio';
 import rateLimit from 'express-rate-limit';
 import Twitter from 'twitter-lite';
+import crypto from 'crypto';
 
 dotenv.config();
 
@@ -445,6 +446,68 @@ app.delete('/api/connected-accounts/:id', verifyToken, async (req: CustomRequest
     console.error('Error disconnecting account:', error);
     res.status(500).json({ error: 'Failed to disconnect account' });
   }
+});
+
+// Mock function to generate trending topics
+const generateMockTrendingTopics = () => {
+  const topics = [
+    'AI', 'Machine Learning', 'Web Development', 'Blockchain',
+    'Cybersecurity', 'Cloud Computing', 'IoT', 'Data Science',
+    'Virtual Reality', 'Augmented Reality', 'Green Tech', '5G'
+  ];
+  return topics.sort(() => 0.5 - Math.random()).slice(0, 5);
+};
+
+// Endpoint to get trending topics
+app.get('/api/trending-topics', verifyToken, (req: CustomRequest, res: express.Response) => {
+  const trendingTopics = generateMockTrendingTopics();
+  res.json({ trendingTopics });
+});
+
+// Mock OAuth flow
+const mockOAuthTokens: { [key: string]: { accessToken: string, refreshToken: string } } = {};
+
+app.get('/api/auth/:platform', verifyToken, (req: CustomRequest, res: express.Response) => {
+  const { platform } = req.params;
+  const state = crypto.randomBytes(16).toString('hex');
+  // In a real implementation, you would redirect to the platform's OAuth page
+  res.json({ authUrl: `/mock-oauth-callback?platform=${platform}&state=${state}` });
+});
+
+app.get('/api/mock-oauth-callback', async (req: CustomRequest, res: express.Response) => {
+  const { platform, state } = req.query;
+  // In a real implementation, you would exchange the code for tokens here
+  const accessToken = crypto.randomBytes(16).toString('hex');
+  const refreshToken = crypto.randomBytes(16).toString('hex');
+  mockOAuthTokens[state as string] = { accessToken, refreshToken };
+  
+  // Save the connected account to the database
+  const user = await auth.verifyIdToken(req.headers.authorization?.split('Bearer ')[1] || '');
+  await db.collection('connected_accounts').add({
+    userId: user.uid,
+    platform,
+    accessToken,
+    refreshToken,
+    connectedAt: new Date()
+  });
+
+  res.redirect(`/social-media-integration?success=true&platform=${platform}`);
+});
+
+app.post('/api/refresh-token/:platform', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  const { platform } = req.params;
+  const { accountId } = req.body;
+
+  // In a real implementation, you would use the refresh token to get a new access token
+  const newAccessToken = crypto.randomBytes(16).toString('hex');
+  
+  // Update the access token in the database
+  await db.collection('connected_accounts').doc(accountId).update({
+    accessToken: newAccessToken,
+    updatedAt: new Date()
+  });
+
+  res.json({ success: true, accessToken: newAccessToken });
 });
 
 app.listen(port, () => {
