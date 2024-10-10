@@ -1,18 +1,52 @@
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '../firebase';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { supabase } from '../supabaseClient';
+import axios from 'axios';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+  const navigate = useNavigate();
+  const location = useLocation();
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      const { data, error } = await supabase.auth.signUp({
+        email: email,
+        password: password,
+      });
+
+      if (error) throw error;
+
+      if (data.user) {
+        console.log('User registered successfully:', data.user);
+        
+        const tempUserId = location.state?.tempUserId;
+        if (tempUserId) {
+          try {
+            const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+            await axios.post(`${serverUrl}/api/update-user-data`, {
+              tempUserId,
+              newUserId: data.user.id
+            });
+            console.log('User data updated successfully');
+          } catch (updateError) {
+            console.error('Error updating user data:', updateError);
+          }
+        }
+
+        navigate('/dashboard');
+      }
     } catch (error) {
-      setError('Failed to create an account');
+      if (error instanceof Error) {
+        setError(`Registration failed: ${error.message}`);
+        console.error('Detailed registration error:', error);
+      } else {
+        setError('An unexpected error occurred during registration');
+        console.error('Unexpected error during registration:', error);
+      }
     }
   };
 

@@ -13,6 +13,7 @@ import Onboarding from './pages/Onboarding';
 import Pricing from './pages/Pricing';
 import Register from './pages/Register';
 import Login from './components/Login';
+import Auth from './pages/Auth';
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null);
@@ -46,6 +47,7 @@ const App: React.FC = () => {
             <Route path="/pricing" element={<Pricing />} />
             <Route path="/register" element={<Register />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/auth" element={<Auth />} />
           </Routes>
         </main>
         <Footer />

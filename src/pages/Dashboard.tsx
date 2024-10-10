@@ -1,6 +1,6 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
-import { Zap, FileText, BarChart2, Trending, PenTool } from 'lucide-react'
+import { Zap, FileText, BarChart2, TrendingUp, PenTool } from 'lucide-react'
 
 const Dashboard: React.FC = () => {
   // Mock data for demonstration purposes
@@ -19,7 +19,7 @@ const Dashboard: React.FC = () => {
         <StatCard icon={<FileText />} title="Generated Content" value={stats.generatedContent} />
         <StatCard icon={<Zap />} title="Active Templates" value={stats.activeTemplates} />
         <StatCard icon={<BarChart2 />} title="Avg. Engagement Rate" value={stats.engagementRate} />
-        <StatCard icon={<Trending />} title="Trending Topic" value={stats.trendingTopic} />
+        <StatCard icon={<TrendingUp />} title="Trending Topic" value={stats.trendingTopic} />
       </div>
 
       <div className="mt-8">

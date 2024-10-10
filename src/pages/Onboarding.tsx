@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, SkipForward } from 'lucide-react';
+import axios from 'axios';
+import { supabase } from '../supabaseClient';
 
 interface UserData {
   name: string;
@@ -21,6 +23,19 @@ const Onboarding: React.FC = () => {
   });
   const [errors, setErrors] = useState<Partial<UserData>>({});
   const navigate = useNavigate();
+  const [userId, setUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchUserId = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      } else {
+        console.log('No authenticated user found');
+      }
+    };
+    fetchUserId();
+  }, []);
 
   const validateStep = (currentStep: number): boolean => {
     const newErrors: Partial<UserData> = {};
@@ -50,14 +65,29 @@ const Onboarding: React.FC = () => {
     return isValid;
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (validateStep(step)) {
       if (step < 3) {
         setStep(step + 1);
       } else {
-        // TODO: Send userData to backend
-        console.log('User data:', userData);
-        navigate('/dashboard');
+        try {
+          const serverUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+          const tempUserId = userId || `temp_${Date.now()}`;
+          const response = await axios.post(`${serverUrl}/api/store-user-data`, { ...userData, userId: tempUserId });
+          console.log('Server response:', response.data);
+          
+          if (userId) {
+            navigate('/dashboard');
+          } else {
+            navigate('/register', { state: { tempUserId } });
+          }
+        } catch (error) {
+          console.error('Error storing user data:', error);
+          if (axios.isAxiosError(error)) {
+            console.error('Axios error details:', error.response?.data);
+          }
+          setErrors({ ...errors, submit: 'Failed to store user data. Please try again.' });
+        }
       }
     }
   };
@@ -131,9 +161,7 @@ const Onboarding: React.FC = () => {
   );
 };
 
-// Update StepOne, StepTwo, and StepThree components to include error handling
-// For brevity, I'll only show the updated StepOne component
-
+// Move StepOne, StepTwo, and StepThree components outside of the Onboarding component
 const StepOne: React.FC<{
   userData: UserData;
   updateUserData: (data: Partial<UserData>) => void;
@@ -190,6 +218,70 @@ const StepOne: React.FC<{
   </div>
 );
 
-// ... (StepTwo and StepThree components)
+const StepTwo: React.FC<{
+  userData: UserData;
+  updateUserData: (data: Partial<UserData>) => void;
+  errors: Partial<UserData>;
+}> = ({ userData, updateUserData, errors }) => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <h2 className="text-2xl font-semibold mb-4">Your Content Strategy</h2>
+    <div className="space-y-4">
+      <div>
+        <label className="block mb-1 font-medium">Platforms</label>
+        {['Facebook', 'Twitter', 'Instagram', 'LinkedIn', 'TikTok'].map((platform) => (
+          <label key={platform} className="flex items-center mt-2">
+            <input
+              type="checkbox"
+              checked={userData.platforms.includes(platform)}
+              onChange={(e) => {
+                const updatedPlatforms = e.target.checked
+                  ? [...userData.platforms, platform]
+                  : userData.platforms.filter((p) => p !== platform);
+                updateUserData({ platforms: updatedPlatforms });
+              }}
+              className="mr-2"
+            />
+            {platform}
+          </label>
+        ))}
+        {errors.platforms && <p className="text-red-500 text-sm mt-1">{errors.platforms}</p>}
+      </div>
+      <div>
+        <label htmlFor="contentType" className="block mb-1 font-medium">
+          Primary Content Type
+        </label>
+        <select
+          id="contentType"
+          value={userData.contentType}
+          onChange={(e) => updateUserData({ contentType: e.target.value })}
+          className={`w-full p-2 border rounded-md ${errors.contentType ? 'border-red-500' : ''}`}
+        >
+          <option value="">Select a content type</option>
+          <option value="text">Text Posts</option>
+          <option value="images">Images</option>
+          <option value="videos">Videos</option>
+          <option value="mixed">Mixed Content</option>
+        </select>
+        {errors.contentType && <p className="text-red-500 text-sm mt-1">{errors.contentType}</p>}
+      </div>
+    </div>
+  </div>
+);
+
+const StepThree: React.FC = () => (
+  <div className="bg-white p-6 rounded-lg shadow-md">
+    <h2 className="text-2xl font-semibold mb-4">You're All Set!</h2>
+    <p className="text-lg mb-4">
+      Thank you for completing the onboarding process. We're excited to help you create amazing content!
+    </p>
+    <ul className="list-disc list-inside space-y-2 mb-4">
+      <li>Your personalized dashboard is ready</li>
+      <li>Start generating content with AI assistance</li>
+      <li>Explore trending topics in your industry</li>
+      <li>Track your content performance</li>
+    </ul>
+    <p className="text-lg font-semibold">Click "Get Started" to begin your journey with ChillBroo!</p>
+  </div>
+);
 
 export default Onboarding;
