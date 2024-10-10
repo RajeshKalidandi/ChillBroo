@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { auth } from '../firebaseConfig';
 import ContentFramework from '../components/ContentFramework';
 import ContentRecommendations from '../components/ContentRecommendations';
 
@@ -17,13 +17,20 @@ const ContentGenerator: React.FC = () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('/api/generate-content', {
+      const idToken = await auth.currentUser?.getIdToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/generate-content`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
         body: JSON.stringify({ prompt, platform, tone, length }),
       });
 
-      if (!response.ok) throw new Error('Failed to generate content');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to generate content');
+      }
 
       const data = await response.json();
       setGeneratedContent(data.content);
@@ -37,17 +44,22 @@ const ContentGenerator: React.FC = () => {
 
   const saveContent = async () => {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
-      if (userError) throw userError;
+      const idToken = await auth.currentUser?.getIdToken();
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/save-content`, {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({ content: generatedContent, platform }),
+      });
 
-      const { data, error: supabaseError } = await supabase
-        .from('generated_content')
-        .insert([
-          { content: generatedContent, platform, user_id: userData.user.id }
-        ]);
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save content');
+      }
 
-      if (supabaseError) throw supabaseError;
-      console.log('Content saved:', data);
+      console.log('Content saved successfully');
     } catch (err) {
       setError('Failed to save content');
       console.error(err);

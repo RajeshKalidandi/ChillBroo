@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../supabaseClient';
+import { db } from '../firebaseConfig';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ContentAnalytics {
@@ -18,22 +18,22 @@ const Analytics: React.FC = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const { data: userData, error: userError } = await supabase.auth.getUser();
+      const { data: userData, error: userError } = await db.auth().getUser();
       if (userError) throw userError;
 
-      const { data, error } = await supabase
-        .from('generated_content')
-        .select('platform')
-        .eq('user_id', userData.user.id);
+      const { data, error } = await db
+        .collection('generated_content')
+        .where('user_id', '==', userData.user.id)
+        .get();
 
       if (error) throw error;
 
-      const analytics = data.reduce((acc: ContentAnalytics[], item) => {
-        const existingPlatform = acc.find(a => a.platform === item.platform);
+      const analytics = data.docs.reduce((acc: ContentAnalytics[], item) => {
+        const existingPlatform = acc.find(a => a.platform === item.data().platform);
         if (existingPlatform) {
           existingPlatform.count++;
         } else {
-          acc.push({ platform: item.platform, count: 1 });
+          acc.push({ platform: item.data().platform, count: 1 });
         }
         return acc;
       }, []);

@@ -12,13 +12,16 @@ const Register: React.FC = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      await createUserWithEmailAndPassword(auth, email, password);
+      console.log('Attempting to register with email:', email);
+      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      console.log('User registered successfully:', userCredential.user);
       navigate('/dashboard');
     } catch (error) {
+      console.error('Registration error:', error);
       if (error instanceof Error) {
-        setError(error.message);
+        setError(`Registration failed: ${error.message}`);
       } else {
-        setError('An unexpected error occurred');
+        setError('An unexpected error occurred during registration');
       }
     }
   };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowRight, ArrowLeft, Check, SkipForward } from 'lucide-react';
 import axios from 'axios';
-import { supabase } from '../supabaseClient';
+import { auth } from '../firebaseConfig';
 
 interface UserData {
   name: string;
@@ -27,9 +27,9 @@ const Onboarding: React.FC = () => {
 
   useEffect(() => {
     const fetchUserId = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
+      const user = auth.currentUser;
       if (user) {
-        setUserId(user.id);
+        setUserId(user.uid);
       } else {
         console.log('No authenticated user found');
       }
@@ -70,7 +70,6 @@ const Onboarding: React.FC = () => {
       if (step < 3) {
         setStep(step + 1);
       } else {
-        // Instead of storing data, we'll navigate to the auth page
         navigate('/auth', { state: { userData } });
       }
     }

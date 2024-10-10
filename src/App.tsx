@@ -13,6 +13,8 @@ import Onboarding from './pages/Onboarding';
 import Pricing from './pages/Pricing';
 import Register from './components/Register';
 import Login from './components/Login';
+import UserProfile from './components/UserProfile';
+import Auth from './pages/Auth'; // Add this import
 
 const App: React.FC = () => {
   const [user, setUser] = useState<User | null>(null);
@@ -29,6 +31,7 @@ const App: React.FC = () => {
         <main className="flex-grow container mx-auto px-4 py-8">
           <Routes>
             <Route path="/" element={<Onboarding />} />
+            <Route path="/auth" element={<Auth />} /> {/* Add this line */}
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/dashboard" element={user ? <Dashboard /> : <Navigate to="/login" />} />
@@ -37,6 +40,7 @@ const App: React.FC = () => {
             <Route path="/settings" element={user ? <Settings /> : <Navigate to="/login" />} />
             <Route path="/analytics" element={user ? <Analytics /> : <Navigate to="/login" />} />
             <Route path="/pricing" element={<Pricing />} />
+            <Route path="/profile" element={user ? <UserProfile /> : <Navigate to="/login" />} />
           </Routes>
         </main>
         <Footer />

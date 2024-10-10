@@ -1,18 +1,24 @@
-# ChillBroo - AI-Powered Social Media Content Generator
+# 🚀 ChillBroo - AI-Powered Social Media Content Generator
 
-ChillBroo is a SaaS application that uses AI to generate and optimize social media content for various platforms. It leverages natural language processing, web scraping, and trend analysis to provide content recommendations and frameworks.
+![ChillBroo Logo](https://your-logo-url-here.com/logo.png)
 
-## Current Progress
+[![GitHub license](https://img.shields.io/github/license/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/issues)
 
-- Set up the project structure with React, TypeScript, and Vite
-- Implemented user authentication using Firebase
-- Created an onboarding process for new users
-- Developed a dashboard with quick action cards and statistics
-- Implemented backend server with Express.js
-- Integrated GitHub trending topics for content recommendations
-- Migrated from Supabase to Firebase for authentication and database
+ChillBroo is a cutting-edge SaaS application that leverages AI to generate and optimize social media content across various platforms. By harnessing the power of natural language processing, web scraping, and trend analysis, ChillBroo provides tailored content recommendations and frameworks to elevate your social media presence.
 
-## Tech Stack
+## 🌟 Key Features
+
+- 🤖 AI-powered content generation
+- 📊 Content optimization framework
+- 🔑 Keyword suggestions and analysis
+- 📈 Personalized content recommendations
+- 🔐 Secure user authentication and profile management
+- 📉 Comprehensive analytics dashboard
+- 📝 Customizable template management
+
+## 🛠️ Tech Stack
 
 - Frontend: React with TypeScript, Vite
 - Backend: Node.js with Express
@@ -23,7 +29,7 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 - NLP: natural library
 - Web Scraping: cheerio
 
-## Getting Started
+## 🚀 Getting Started
 
 1. Clone the repository:
    ```bash
@@ -34,22 +40,11 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 2. Install dependencies:
    ```bash
    npm install
-   cd server
-   npm install
-   cd ..
+   cd server && npm install && cd ..
    ```
 
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add the following:
-   ```bash
-   VITE_FIREBASE_API_KEY=your_firebase_api_key
-   VITE_FIREBASE_AUTH_DOMAIN=your_firebase_auth_domain
-   VITE_FIREBASE_PROJECT_ID=your_firebase_project_id
-   VITE_FIREBASE_STORAGE_BUCKET=your_firebase_storage_bucket
-   VITE_FIREBASE_MESSAGING_SENDER_ID=your_firebase_messaging_sender_id
-   VITE_FIREBASE_APP_ID=your_firebase_app_id
-   VITE_API_URL=http://localhost:3001
-   ```
+   Create a `.env` file in the root directory and add the necessary Firebase configuration.
 
 4. Start the development server:
    ```bash
@@ -58,13 +53,12 @@ ChillBroo is a SaaS application that uses AI to generate and optimize social med
 
 5. In a separate terminal, start the backend server:
    ```bash
-   cd server
-   npm start
+   cd server && npm start
    ```
 
 6. Open [http://localhost:5173](http://localhost:5173) in your browser to see the application.
 
-## Project Structure
+## 📁 Project Structure
 
 - `src/`: Frontend React application
   - `components/`: Reusable React components

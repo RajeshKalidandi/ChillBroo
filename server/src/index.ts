@@ -1,91 +1,125 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import natural from 'natural';
+import { auth, db } from './firebaseAdmin';
+import { DecodedIdToken } from 'firebase-admin/auth';
 import axios from 'axios';
-import * as cheerio from 'cheerio';
-import { createClient } from '@supabase/supabase-js';
-
-// Add these type definitions
-interface DatamuseWord {
-  word: string;
-  score: number;
-}
-
-interface GitHubTrend {
-  name: string;
-  url: string;
-  description: string;
-  language: string;
-  stars: number;
-}
+import natural from 'natural';
 
 dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3001;
 
-// Update CORS configuration
-app.use(cors({
-  origin: 'http://localhost:5173', // Replace with your frontend URL
-  credentials: true,
-}));
-
+app.use(cors());
 app.use(express.json());
 
-const tokenizer = new natural.WordTokenizer();
-const TfIdf = natural.TfIdf;
-
-const supabaseUrl = process.env.SUPABASE_URL;
-const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseServiceRoleKey) {
-  console.error('Missing Supabase environment variables');
-  process.exit(1);
+// Define a custom interface for the request object
+interface CustomRequest extends express.Request {
+  user?: DecodedIdToken;
 }
 
-const supabase = createClient(supabaseUrl, supabaseServiceRoleKey);
+// Middleware to verify Firebase ID token
+const verifyToken = async (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
+  const idToken = req.headers.authorization?.split('Bearer ')[1];
+  if (!idToken) {
+    return res.status(403).json({ error: 'No token provided' });
+  }
 
-// User registration
-app.post('/api/register', async (req, res) => {
-  const { email, password } = req.body;
   try {
-    const { data, error } = await supabase.auth.admin.createUser({
-      email,
-      password,
-      email_confirm: true
+    const decodedToken = await auth.verifyIdToken(idToken);
+    req.user = decodedToken;
+    next();
+  } catch (error) {
+    res.status(403).json({ error: 'Invalid token' });
+  }
+};
+
+// API endpoint to store user profile data
+app.post('/api/user-profile', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { uid } = req.user!;
+    const profileData = req.body;
+
+    await db.collection('user_profiles').doc(uid).set(profileData, { merge: true });
+
+    res.status(200).json({ message: 'Profile data stored successfully' });
+  } catch (error) {
+    console.error('Error storing profile data:', error);
+    res.status(500).json({ error: 'Failed to store profile data' });
+  }
+});
+
+// New API endpoint to generate content
+app.post('/api/generate-content', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { prompt, platform, tone, length } = req.body;
+    
+    const url = 'https://api.hyperbolic.xyz/v1/chat/completions';
+    const hyperbolicResponse = await axios.post(url, {
+      model: 'meta-llama/Llama-3.2-3B-Instruct',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a social media content creator. Generate a ${length} ${tone} post for ${platform} based on the following prompt:`
+        },
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+      max_tokens: 512,
+      temperature: 0.7,
+      top_p: 0.9,
+      stream: false
+    }, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${process.env.HYPERBOLIC_API_KEY}`
+      }
     });
-    if (error) throw error;
-    res.status(200).json({ message: 'User registered successfully', user: data.user });
+
+    const generatedContent = hyperbolicResponse.data.choices[0].message.content;
+
+    res.status(200).json({ content: generatedContent });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Failed to register user' });
+    console.error('Error generating content:', error);
+    res.status(500).json({ error: 'Failed to generate content' });
   }
 });
 
-// User login
-app.post('/api/login', async (req, res) => {
-  const { email, password } = req.body;
+// New API endpoint to save content
+app.post('/api/save-content', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    res.status(200).json({ message: 'User logged in successfully', session: data.session });
+    const { uid } = req.user!;
+    const { content, platform } = req.body;
+
+    await db.collection('generated_content').add({
+      userId: uid,
+      content,
+      platform,
+      createdAt: new Date(),
+    });
+
+    res.status(200).json({ message: 'Content saved successfully' });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Failed to log in' });
+    console.error('Error saving content:', error);
+    res.status(500).json({ error: 'Failed to save content' });
   }
 });
 
-app.post('/api/generate-framework', async (req, res) => {
+// New endpoint for generating framework
+app.post('/api/generate-framework', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
     const { content, platform } = req.body;
     
-    // Use TF-IDF to extract important topics
+    const tokenizer = new natural.WordTokenizer();
+    const TfIdf = natural.TfIdf;
     const tfidf = new TfIdf();
+
     tfidf.addDocument(content);
     const topics = tfidf.listTerms(0).slice(0, 5).map(item => item.term);
 
-    // Generate framework based on extracted topics
     const framework = `
 1. Introduction
    - Hook: ${topics[0] || 'Introduce the main topic'}
@@ -113,11 +147,12 @@ app.post('/api/generate-framework', async (req, res) => {
   }
 });
 
-app.post('/api/generate-keywords', async (req, res) => {
+// New endpoint for generating keywords
+app.post('/api/generate-keywords', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
     const { content } = req.body;
     
-    // Use TF-IDF to extract important keywords from the content
+    const TfIdf = natural.TfIdf;
     const tfidf = new TfIdf();
     tfidf.addDocument(content);
 
@@ -128,156 +163,24 @@ app.post('/api/generate-keywords', async (req, res) => {
         score: Math.round(item.tfidf * 100) / 100
       }));
 
-    // Use datamuse API to get related words
-    const topKeyword = keywords[0].keyword;
-    const datamuseResponse = await axios.get<DatamuseWord[]>(`https://api.datamuse.com/words?ml=${topKeyword}&max=5`);
-    const relatedWords = datamuseResponse.data.map((word: DatamuseWord) => ({
-      keyword: word.word,
-      score: Math.round(word.score / 100) / 100
-    }));
-
-    const combinedKeywords = [...keywords, ...relatedWords]
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 10);
-
-    res.json({ keywords: combinedKeywords });
+    res.json({ keywords });
   } catch (error) {
     console.error('Error generating keywords:', error);
     res.status(500).json({ error: 'Failed to generate keywords' });
   }
 });
 
-app.post('/api/store-user-data', async (req, res) => {
-  try {
-    const { name, company, industry, platforms, contentType, userId } = req.body;
-
-    console.log('Received user data:', { name, company, industry, platforms, contentType, userId });
-
-    // Test Supabase connection
-    const { data: testData, error: testError } = await supabase.from('user_profiles').select('count', { count: 'exact' });
-    if (testError) {
-      console.error('Error testing Supabase connection:', testError);
-      throw testError;
-    }
-    console.log('Supabase connection test successful:', testData);
-
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .upsert({
-        id: userId,
-        name,
-        company,
-        industry,
-        platforms,
-        content_type: contentType
-      }, {
-        onConflict: 'id'
-      });
-
-    if (error) throw error;
-
-    console.log('User data stored successfully:', data);
-    res.status(200).json({ message: 'User data stored successfully', data });
-  } catch (error) {
-    console.error('Error storing user data:', error);
-    res.status(500).json({ error: 'Failed to store user data', details: error });
-  }
-});
-
-app.post('/api/update-user-data', async (req, res) => {
-  try {
-    const { tempUserId, newUserId } = req.body;
-
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update({ id: newUserId })
-      .match({ id: tempUserId });
-
-    if (error) throw error;
-
-    res.status(200).json({ message: 'User data updated successfully', data });
-  } catch (error) {
-    console.error('Error updating user data:', error);
-    res.status(500).json({ error: 'Failed to update user data' });
-  }
-});
-
-async function getTrendingRepos(): Promise<GitHubTrend[]> {
-  const response = await axios.get('https://github.com/trending');
-  const $ = cheerio.load(response.data);
-  const repos: GitHubTrend[] = [];
-
-  $('article.Box-row').each((_, elem) => {
-    const $elem = $(elem);
-    const name = $elem.find('h3').text().trim().replace(/\s+/g, '');
-    const url = `https://github.com${$elem.find('h3 a').attr('href')}`;
-    const description = $elem.find('p.col-9').text().trim();
-    const language = $elem.find('[itemprop="programmingLanguage"]').text().trim();
-    const stars = parseInt($elem.find('a.muted-link').first().text().trim().replace(',', ''), 10) || 0;
-
-    repos.push({ name, url, description, language, stars });
-  });
-
-  return repos;
-}
-
-app.post('/api/get-recommendations', async (req, res) => {
+// New endpoint for getting recommendations
+app.post('/api/get-recommendations', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
     const { userContent, userInterests } = req.body;
 
-    // Extract key terms from user content and interests
-    const tfidf = new TfIdf();
-    tfidf.addDocument(userContent);
-    userInterests.forEach((interest: string) => tfidf.addDocument(interest));
-
-    const keyTerms = tfidf.listTerms(0).slice(0, 5).map(item => item.term);
-
-    // Get trending topics from GitHub
-    const trendingRepos = await getTrendingRepos();
-
-    const trends = trendingRepos
-      .filter((repo: GitHubTrend) => 
-        keyTerms.some(term => 
-          repo.name.toLowerCase().includes(term.toLowerCase()) || 
-          repo.description.toLowerCase().includes(term.toLowerCase())
-        )
-      )
-      .map((repo: GitHubTrend) => ({
-        topic: repo.name,
-        description: repo.description,
-        url: repo.url,
-        stars: repo.stars,
-        language: repo.language
-      }))
-      .slice(0, 10);
-
-    // Get related topics from Wikipedia
-    const wikiPromises = keyTerms.map(term =>
-      axios.get(`https://en.wikipedia.org/w/api.php`, {
-        params: {
-          action: 'query',
-          list: 'search',
-          srsearch: term,
-          format: 'json',
-          utf8: 1,
-          srlimit: 5
-        }
-      }).then(response => response.data.query.search.map((result: any) => ({
-        title: result.title,
-        snippet: result.snippet.replace(/<\/?span[^>]*>/g, '')
-      })))
-    );
-
-    const wikiResults = await Promise.all(wikiPromises);
-    const relatedTopics = wikiResults.flat().slice(0, 10);
-
-    // Combine recommendations
-    const recommendations = [
-      ...trends.map((trend: { topic: string; description: string; url: string; stars: number; language: string }) => 
-        ({ ...trend, type: 'trend' as const })
-      ),
-      ...relatedTopics.map(topic => ({ ...topic, type: 'topic' as const }))
-    ];
+    // This is a simplified version. You might want to implement more sophisticated recommendation logic.
+    const recommendations = userInterests.map(interest => ({
+      topic: interest,
+      type: 'interest',
+      relevance: Math.random()  // Mock relevance score
+    }));
 
     res.json({ recommendations });
   } catch (error) {
@@ -285,6 +188,8 @@ app.post('/api/get-recommendations', async (req, res) => {
     res.status(500).json({ error: 'Failed to generate recommendations' });
   }
 });
+
+// Add more endpoints as needed
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
