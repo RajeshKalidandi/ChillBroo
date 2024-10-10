@@ -11,12 +11,8 @@ const Login: React.FC = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: email,
-        password: password,
-      });
+      const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      // Login successful, redirect to dashboard
       navigate('/dashboard');
     } catch (error) {
       setError('Failed to log in. Please check your credentials.');
