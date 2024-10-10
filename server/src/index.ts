@@ -94,7 +94,7 @@ app.post('/api/get-recommendations', async (req, res) => {
     // Extract key terms from user content and interests
     const tfidf = new TfIdf();
     tfidf.addDocument(userContent);
-    userInterests.forEach(interest => tfidf.addDocument(interest));
+    userInterests.forEach((interest: string) => tfidf.addDocument(interest));
 
     const keyTerms = tfidf.listTerms(0).slice(0, 5).map(item => item.term);
 
@@ -103,8 +103,8 @@ app.post('/api/get-recommendations', async (req, res) => {
       googleTrends.dailyTrends({
         trendDate: new Date(),
         geo: 'US',
-      }).then(results => {
-        const data = JSON.parse(results);
+      }).then((results: string) => {
+        const data: googleTrends.TrendResult = JSON.parse(results);
         return data.default.trendingSearchesDays[0].trendingSearches
           .filter(search => search.title.query.toLowerCase().includes(term.toLowerCase()))
           .map(search => ({
@@ -128,7 +128,7 @@ app.post('/api/get-recommendations', async (req, res) => {
           utf8: 1,
           srlimit: 5
         }
-      }).then(response => response.data.query.search.map(result => ({
+      }).then(response => response.data.query.search.map((result: any) => ({
         title: result.title,
         snippet: result.snippet.replace(/<\/?span[^>]*>/g, '')
       })))
@@ -139,9 +139,9 @@ app.post('/api/get-recommendations', async (req, res) => {
 
     // Combine and rank recommendations
     const recommendations = [
-      ...trends.map(trend => ({ ...trend, type: 'trend' })),
-      ...relatedTopics.map(topic => ({ ...topic, type: 'topic' }))
-    ].sort((a, b) => (b.traffic || 0) - (a.traffic || 0));
+      ...trends.map(trend => ({ ...trend, type: 'trend' as const })),
+      ...relatedTopics.map(topic => ({ ...topic, type: 'topic' as const }))
+    ].sort((a, b) => (b.traffic || '0').localeCompare(a.traffic || '0'));
 
     res.json({ recommendations });
   } catch (error) {
@@ -150,4 +150,6 @@ app.post('/api/get-recommendations', async (req, res) => {
   }
 });
 
-// ... (rest of the server code)
+app.listen(port, () => {
+  console.log(`Server is running on port ${port}`);
+});

@@ -9,35 +9,24 @@ const ContentGenerator: React.FC = () => {
   const [platform, setPlatform] = useState('twitter');
   const [tone, setTone] = useState('casual');
   const [length, setLength] = useState('short');
-  const [preferredService, setPreferredService] = useState('');
+  const [userInterests, setUserInterests] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const [isEditing, setIsEditing] = useState(false);
-  const [usedService, setUsedService] = useState('');
-  const [userInterests, setUserInterests] = useState<string[]>([]);
 
   const generateContent = async () => {
     setIsLoading(true);
     setError('');
     try {
-      const response = await fetch('http://localhost:3001/api/generate-content', {
+      const response = await fetch('/api/generate-content', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${import.meta.env.VITE_HYPERBOLIC_API_KEY}`,
-          'HuggingFace-Authorization': `Bearer ${import.meta.env.VITE_HUGGINGFACE_API_KEY}`
-        },
-        body: JSON.stringify({ prompt, platform, tone, length, preferredService }),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt, platform, tone, length }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to generate content');
-      }
+      if (!response.ok) throw new Error('Failed to generate content');
 
       const data = await response.json();
       setGeneratedContent(data.content);
-      setUsedService(data.usedService);
-      setIsEditing(true);
     } catch (err) {
       setError('An error occurred while generating content. Please try again.');
       console.error(err);
@@ -59,7 +48,6 @@ const ContentGenerator: React.FC = () => {
 
       if (supabaseError) throw supabaseError;
       console.log('Content saved:', data);
-      setIsEditing(false);
     } catch (err) {
       setError('Failed to save content');
       console.error(err);
@@ -116,21 +104,6 @@ const ContentGenerator: React.FC = () => {
         </select>
       </div>
       <div className="mb-4">
-        <label htmlFor="preferredService" className="block mb-2">Preferred Service (Optional)</label>
-        <select
-          id="preferredService"
-          value={preferredService}
-          onChange={(e) => setPreferredService(e.target.value)}
-          className="w-full p-2 border rounded"
-        >
-          <option value="">No preference</option>
-          <option value="hyperbolic">Hyperbolic</option>
-          <option value="deepseek">DeepSeek</option>
-          <option value="ollama">Ollama</option>
-          <option value="huggingface">HuggingFace</option>
-        </select>
-      </div>
-      <div className="mb-4">
         <label htmlFor="prompt" className="block mb-2">Prompt</label>
         <textarea
           id="prompt"
@@ -163,35 +136,14 @@ const ContentGenerator: React.FC = () => {
         <>
           <div className="mt-4">
             <h2 className="text-xl font-semibold mb-2">Generated Content:</h2>
-            {isEditing ? (
-              <textarea
-                value={generatedContent}
-                onChange={(e) => setGeneratedContent(e.target.value)}
-                className="w-full p-2 border rounded"
-                rows={6}
-              ></textarea>
-            ) : (
-              <p className="p-2 bg-gray-100 rounded">{generatedContent}</p>
-            )}
-            <div className="mt-2">
-              {isEditing ? (
-                <button
-                  onClick={saveContent}
-                  className="bg-green-500 text-white p-2 rounded hover:bg-green-600"
-                >
-                  Save Content
-                </button>
-              ) : (
-                <button
-                  onClick={() => setIsEditing(true)}
-                  className="bg-yellow-500 text-white p-2 rounded hover:bg-yellow-600"
-                >
-                  Edit Content
-                </button>
-              )}
-            </div>
+            <p className="p-2 bg-gray-100 rounded">{generatedContent}</p>
+            <button
+              onClick={saveContent}
+              className="mt-2 bg-green-500 text-white p-2 rounded hover:bg-green-600"
+            >
+              Save Content
+            </button>
           </div>
-          
           <ContentFramework generatedContent={generatedContent} platform={platform} />
           <ContentRecommendations userContent={generatedContent} userInterests={userInterests} />
         </>
