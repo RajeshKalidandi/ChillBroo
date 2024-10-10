@@ -44,7 +44,8 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
    ```
 
 3. Set up environment variables:
-   Create a `.env` file in the root directory and add the necessary Firebase configuration.
+   - Create a `.env` file in the root directory and add the necessary Firebase configuration.
+   - Create a `.env` file in the `server` directory for backend environment variables.
 
 4. Start the development server:
    ```bash
@@ -81,6 +82,45 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 
 Contributions are welcome! Please feel free to submit a Pull Request.
 
-## License
 
-This project is licensed under the MIT License.
+## 🎯 Current Progress
+
+- ✅ User authentication with Firebase
+- ✅ Onboarding process for new users
+- ✅ Dashboard with quick action cards
+- ✅ Content generation using AI (Hyperbolic API)
+- ✅ Basic analytics implementation
+- ✅ Content framework and recommendations
+
+## 🔜 Next Steps
+
+- [ ] Enhance AI-powered content generation
+- [ ] Implement template management system
+- [ ] Develop advanced analytics dashboard
+- [ ] Integrate with more social media platforms
+- [ ] Enhance recommendation engine with machine learning
+- [ ] Implement user profile management with Firestore
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps to contribute:
+
+1. Fork the repository
+2. Create a new branch: `git checkout -b feature/your-feature-name`
+3. Make your changes and commit them: `git commit -m 'Add some feature'`
+4. Push to the branch: `git push origin feature/your-feature-name`
+5. Submit a pull request
+
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct and the process for submitting pull requests.
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 📬 Contact
+
+For any queries or suggestions, please open an issue or contact us at [your-email@example.com](mailto:your-email@example.com).
+
+---
+
+Made with ❤️ by [RajeshKalidandi/](https://github.com/RajeshKalidandi/)
