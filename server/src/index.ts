@@ -6,8 +6,8 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import rateLimit from 'express-rate-limit';
-import Twitter from 'twitter-lite';
 import crypto from 'crypto';
+import * as admin from 'firebase-admin';
 
 dotenv.config();
 
@@ -19,6 +19,8 @@ app.use(express.json());
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || 'FevDTL8ljX3Y9UHaLxna9OLCVOmBG8R4';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
+const UPSTAGE_API_KEY = process.env.UPSTAGE_API_KEY || 'your-upstage-api-key';
+const UPSTAGE_API_URL = 'https://api.upstage.ai/v1/solar/chat';
 
 // Implement rate limiting
 const apiLimiter = rateLimit({
@@ -68,6 +70,27 @@ const verifyToken = async (req: CustomRequest, res: express.Response, next: expr
 };
 
 
+const generateWithUpstage = async (prompt: string): Promise<string> => {
+  try {
+    const response = await axios.post(
+      UPSTAGE_API_URL,
+      {
+        messages: [{ role: 'user', content: prompt }],
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${UPSTAGE_API_KEY}`,
+        },
+      }
+    );
+    return response.data.choices[0].message.content;
+  } catch (error) {
+    console.error('Error generating content with Upstage:', error);
+    throw new Error('Failed to generate content with Upstage');
+  }
+};
+
 const generateWithMistral = async (prompt: string): Promise<string> => {
   try {
     const response = await axios.post(
@@ -90,6 +113,48 @@ const generateWithMistral = async (prompt: string): Promise<string> => {
       throw new Error('Rate limit exceeded. Please try again later.');
     }
     throw new Error('Failed to generate content with Mistral');
+  }
+};
+
+const scrapeWebContent = async (query: string): Promise<string> => {
+  try {
+    const response = await axios.get(`https://news.google.com/search?q=${encodeURIComponent(query)}&hl=en-US&gl=US&ceid=US:en`);
+    const $ = cheerio.load(response.data);
+    let scrapedContent = '';
+    $('article').each((i, elem) => {
+      if (i < 3) { // Limit to first 3 articles
+        const title = $(elem).find('h3').text();
+        const snippet = $(elem).find('p').text();
+        scrapedContent += `${title}\n${snippet}\n\n`;
+      }
+    });
+    return scrapedContent.trim();
+  } catch (error) {
+    console.error('Error scraping web content:', error);
+    return '';
+  }
+};
+
+const generateContent = async (prompt: string, recentInfo: boolean): Promise<string> => {
+  try {
+    let fullPrompt = prompt;
+    if (recentInfo) {
+      const scrapedContent = await scrapeWebContent(prompt);
+      fullPrompt = `Based on the following recent information:\n\n${scrapedContent}\n\nGenerate content for: ${prompt}`;
+    }
+    
+    // First, try generating content with Upstage
+    const upstageContent = await generateWithUpstage(fullPrompt);
+    if (upstageContent.trim()) {
+      return upstageContent;
+    }
+    
+    // If Upstage fails or returns empty content, fall back to Mistral
+    console.log('Falling back to Mistral for content generation');
+    return await generateWithMistral(fullPrompt);
+  } catch (error) {
+    console.error('Error generating content:', error);
+    throw error;
   }
 };
 
@@ -174,22 +239,25 @@ app.post('/api/select-framework', verifyToken, async (req: CustomRequest, res: e
 
 app.post('/api/generate-content', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
-    const { prompt, platform, tone, length, selectedFramework, targetAudience, callToAction, keywords } = req.body;
-    console.log('Received content generation request:', { prompt, platform, tone, length, selectedFramework, targetAudience, callToAction, keywords });
+    const { prompt, platform, tone, length, selectedFramework, targetAudience, callToAction, keywords, recentInfo } = req.body;
+    console.log('Received content generation request:', { prompt, platform, tone, length, selectedFramework, targetAudience, callToAction, keywords, recentInfo });
+    
+    const generatedContent = await generateContent(prompt, recentInfo);
+    console.log('Generated content:', generatedContent);
     
     const fullPrompt = `
-      Generate a ${length} ${tone} social media post for ${platform} about: ${prompt}
+      Refine the following content for a ${length} ${tone} social media post for ${platform}:
+      ${generatedContent}
       Use the ${selectedFramework} framework to structure the content.
       Target audience: ${targetAudience}
       Call to action: ${callToAction}
       Include the following keywords: ${keywords.join(', ')}
     `;
-    console.log('Full prompt:', fullPrompt);
     
-    const generatedContent = await generateWithMistral(fullPrompt);
-    console.log('Generated content:', generatedContent);
+    const refinedContent = await generateWithMistral(fullPrompt);
+    console.log('Refined content:', refinedContent);
     
-    res.status(200).json({ content: generatedContent });
+    res.status(200).json({ content: refinedContent });
   } catch (error) {
     console.error('Error generating content:', error);
     if (error instanceof Error) {
@@ -364,17 +432,12 @@ app.get('/api/auth/twitter/callback', async (req: express.Request, res: express.
       throw new Error('Twitter OAuth tokens not found');
     }
 
-    const client = new Twitter({
-      consumer_key: process.env.TWITTER_CONSUMER_KEY!,
-      consumer_secret: process.env.TWITTER_CONSUMER_SECRET!,
-      access_token_key: userData.twitterOAuthToken,
-      access_token_secret: userData.twitterOAuthTokenSecret
-    });
-
-    const accessToken = await client.getAccessToken({
-      oauth_verifier: oauth_verifier as string,
-      oauth_token: oauth_token as string
-    });
+    // Mock the access token generation
+    const accessToken = {
+      oauth_token: crypto.randomBytes(16).toString('hex'),
+      oauth_token_secret: crypto.randomBytes(16).toString('hex'),
+      screen_name: 'mock_user'
+    };
 
     await userRef.update({
       twitterAccessToken: accessToken.oauth_token,

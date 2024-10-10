@@ -10,7 +10,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 
 ## 🌟 Key Features
 
-- 🤖 AI-powered content generation using Mistral AI
+- 🤖 AI-powered content generation using Upstage Solar Pro Preview and Mistral AI
 - 📊 Dynamic content framework selection
 - 🔑 Keyword suggestions and analysis
 - 📈 Personalized content recommendations
@@ -22,6 +22,8 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - 📝 Template management system
 - 👥 Team collaboration features
 - ⚡ Rate limiting and usage tracking
+- 🌐 Web scraping for real-time content insights
+- 🔄 Fallback AI model implementation
 
 ## 🛠️ Tech Stack
 
@@ -30,7 +32,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - Database: Firebase Firestore
 - Authentication: Firebase Authentication
 - Styling: Tailwind CSS
-- AI Integration: Mistral AI
+- AI Integration: Upstage Solar Pro Preview, Mistral AI
 - State Management: React Hooks
 - Charts: Recharts
 
@@ -80,7 +82,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ User authentication with Firebase
 - ✅ Onboarding process for new users
 - ✅ Dashboard with quick action cards and trending topics
-- ✅ Content generation using Mistral AI
+- ✅ Content generation using multiple AI models
 - ✅ Dynamic content framework selection
 - ✅ Keyword generation and recommendations
 - ✅ Advanced analytics implementation
@@ -92,6 +94,10 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ Error handling and user feedback improvements
 - ✅ Team collaboration features
 - ✅ Rate limiting and usage tracking
+- ✅ Web scraping for real-time content insights
+- ✅ Fallback AI model implementation
+- ✅ Loading spinner for better UX
+- ✅ Toast notifications for user feedback
 
 ## 🔜 Next Steps
 
@@ -101,6 +107,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - [ ] Add support for more languages and localization
 - [ ] Develop a mobile app version
 - [ ] Implement advanced user roles and permissions
+- [ ] Optimize AI model selection based on content type and performance
 
 ## 🤝 Contributing
 

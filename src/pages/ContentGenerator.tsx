@@ -23,6 +23,7 @@ const ContentGenerator: React.FC = () => {
   const [callToAction, setCallToAction] = useState('');
   const [keywords, setKeywords] = useState('');
   const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
+  const [recentInfo, setRecentInfo] = useState(false);
 
   useEffect(() => {
     fetchTemplates();
@@ -90,7 +91,8 @@ const ContentGenerator: React.FC = () => {
           selectedFramework,
           targetAudience,
           callToAction,
-          keywords: keywords.split(',').map(k => k.trim())
+          keywords: keywords.split(',').map(k => k.trim()),
+          recentInfo
         }),
       });
 
@@ -237,6 +239,17 @@ const ContentGenerator: React.FC = () => {
           className="w-full p-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           placeholder="e.g. technology, marketing, social media"
         />
+      </div>
+      <div className="mb-6">
+        <label className="flex items-center">
+          <input
+            type="checkbox"
+            checked={recentInfo}
+            onChange={(e) => setRecentInfo(e.target.checked)}
+            className="mr-2"
+          />
+          Include recent information
+        </label>
       </div>
       <button
         onClick={generateContent}
