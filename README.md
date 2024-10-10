@@ -2,21 +2,21 @@
 
 ![ChillBroo Logo](https://your-logo-url-here.com/logo.png)
 
-[![GitHub license](https://img.shields.io/github/license/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/blob/main/LICENSE)
-[![GitHub stars](https://img.shields.io/github/stars/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/stargazers)
-[![GitHub issues](https://img.shields.io/github/issues/your-username/chillbroo.svg)](https://github.com/your-username/chillbroo/issues)
+[![GitHub license](https://img.shields.io/github/license/RajeshKalidandi/chillbroo.svg)](https://github.com/RajeshKalidandi/chillbroo/blob/main/LICENSE)
+[![GitHub stars](https://img.shields.io/github/stars/RajeshKalidandi/chillbroo.svg)](https://github.com/RajeshKalidandi/chillbroo/stargazers)
+[![GitHub issues](https://img.shields.io/github/issues/RajeshKalidandi/chillbroo.svg)](https://github.com/RajeshKalidandi/chillbroo/issues)
 
-ChillBroo is a cutting-edge SaaS application that leverages AI to generate and optimize social media content across various platforms. By harnessing the power of natural language processing, web scraping, and trend analysis, ChillBroo provides tailored content recommendations and frameworks to elevate your social media presence.
+ChillBroo is a cutting-edge SaaS application that leverages AI to generate and optimize social media content across various platforms. By harnessing the power of natural language processing and trend analysis, ChillBroo provides tailored content recommendations and frameworks to elevate your social media presence.
 
 ## 🌟 Key Features
 
-- 🤖 AI-powered content generation
-- 📊 Content optimization framework
+- 🤖 AI-powered content generation using Mistral AI
+- 📊 Dynamic content framework selection
 - 🔑 Keyword suggestions and analysis
 - 📈 Personalized content recommendations
-- 🔐 Secure user authentication and profile management
-- 📉 Comprehensive analytics dashboard
-- 📝 Customizable template management
+- 🔐 Secure user authentication with Firebase
+- 📉 Basic analytics dashboard
+- 🎨 Responsive and user-friendly interface
 
 ## 🛠️ Tech Stack
 
@@ -25,15 +25,14 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - Database: Firebase Firestore
 - Authentication: Firebase Authentication
 - Styling: Tailwind CSS
-- API Integrations: Wikipedia API, GitHub Trending (web scraping)
-- NLP: natural library
-- Web Scraping: cheerio
+- AI Integration: Mistral AI
+- State Management: React Hooks
 
 ## 🚀 Getting Started
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/chillbroo.git
+   git clone https://github.com/RajeshKalidandi/chillbroo.git
    cd chillbroo
    ```
 
@@ -44,7 +43,7 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
    ```
 
 3. Set up environment variables:
-   - Create a `.env` file in the root directory and add the necessary Firebase configuration.
+   - Create a `.env` file in the root directory for frontend environment variables.
    - Create a `.env` file in the `server` directory for backend environment variables.
 
 4. Start the development server:
@@ -68,38 +67,26 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - `server/`: Backend Node.js server
   - `src/index.ts`: Main server file with API endpoints
 
-## Next Steps
-
-- Implement AI-powered content generation
-- Create a template management system
-- Develop an analytics dashboard
-- Integrate with more social media platforms
-- Enhance the recommendation engine with machine learning
-- Update backend to use Firebase Admin SDK
-- Implement user profile management with Firestore
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-
 ## 🎯 Current Progress
 
 - ✅ User authentication with Firebase
 - ✅ Onboarding process for new users
 - ✅ Dashboard with quick action cards
-- ✅ Content generation using AI (Hyperbolic API)
+- ✅ Content generation using Mistral AI
+- ✅ Dynamic content framework selection
+- ✅ Keyword generation and recommendations
 - ✅ Basic analytics implementation
-- ✅ Content framework and recommendations
+- ✅ Responsive design with Tailwind CSS
 
 ## 🔜 Next Steps
 
-- [ ] Enhance AI-powered content generation
+- [ ] Enhance AI-powered content generation with more customization options
 - [ ] Implement template management system
 - [ ] Develop advanced analytics dashboard
-- [ ] Integrate with more social media platforms
-- [ ] Enhance recommendation engine with machine learning
-- [ ] Implement user profile management with Firestore
+- [ ] Integrate with social media platforms for direct posting
+- [ ] Implement user profile management and settings
+- [ ] Add collaborative features for team accounts
+- [ ] Implement rate limiting and usage tracking
 
 ## 🤝 Contributing
 
@@ -123,4 +110,4 @@ For any queries or suggestions, please open an issue or contact us at [your-emai
 
 ---
 
-Made with ❤️ by [RajeshKalidandi/](https://github.com/RajeshKalidandi/)
+Made with ❤️ by [RajeshKalidandi](https://github.com/RajeshKalidandi/)

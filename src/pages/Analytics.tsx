@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { db } from '../firebaseConfig';
+import { auth, db } from '../firebaseConfig';
+import { collection, query, where, getDocs } from 'firebase/firestore';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 interface ContentAnalytics {
@@ -18,22 +19,22 @@ const Analytics: React.FC = () => {
 
   const fetchAnalytics = async () => {
     try {
-      const { data: userData, error: userError } = await db.auth().getUser();
-      if (userError) throw userError;
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error('No authenticated user found');
+      }
 
-      const { data, error } = await db
-        .collection('generated_content')
-        .where('user_id', '==', userData.user.id)
-        .get();
+      const contentRef = collection(db, 'generated_content');
+      const q = query(contentRef, where('userId', '==', user.uid));
+      const querySnapshot = await getDocs(q);
 
-      if (error) throw error;
-
-      const analytics = data.docs.reduce((acc: ContentAnalytics[], item) => {
-        const existingPlatform = acc.find(a => a.platform === item.data().platform);
+      const analytics = querySnapshot.docs.reduce((acc: ContentAnalytics[], doc) => {
+        const data = doc.data();
+        const existingPlatform = acc.find(a => a.platform === data.platform);
         if (existingPlatform) {
           existingPlatform.count++;
         } else {
-          acc.push({ platform: item.data().platform, count: 1 });
+          acc.push({ platform: data.platform, count: 1 });
         }
         return acc;
       }, []);
