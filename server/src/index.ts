@@ -6,6 +6,7 @@ import { DecodedIdToken } from 'firebase-admin/auth';
 import axios from 'axios';
 import cheerio from 'cheerio';
 import rateLimit from 'express-rate-limit';
+import Twitter from 'twitter-lite';
 
 dotenv.config();
 
@@ -21,10 +22,29 @@ const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
 // Implement rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100 // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
+  message: 'Too many requests, please try again later.',
+  standardHeaders: true,
+  legacyHeaders: false,
 });
 
+// Apply rate limiting to all routes
 app.use(apiLimiter);
+
+// Usage tracking middleware
+const trackUsage = async (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
+  if (req.user) {
+    const usageRef = db.collection('usage').doc(req.user.uid);
+    await usageRef.set({
+      lastAccess: new Date(),
+      requestCount: admin.firestore.FieldValue.increment(1)
+    }, { merge: true });
+  }
+  next();
+};
+
+// Apply usage tracking to all routes
+app.use(trackUsage);
 
 interface CustomRequest extends express.Request {
   user?: DecodedIdToken;
@@ -328,6 +348,103 @@ app.delete('/api/templates/:id', verifyToken, async (req: CustomRequest, res: ex
 
 app.get('/api/content-frameworks', verifyToken, (req: CustomRequest, res: express.Response) => {
   res.json({ frameworks: contentFrameworks });
+});
+
+app.get('/api/auth/twitter/callback', async (req: express.Request, res: express.Response) => {
+  const { oauth_token, oauth_verifier } = req.query;
+  
+  try {
+    const user = await auth.verifyIdToken(req.headers.authorization?.split('Bearer ')[1] || '');
+    const userRef = db.collection('users').doc(user.uid);
+    const userDoc = await userRef.get();
+    const userData = userDoc.data();
+
+    if (!userData?.twitterOAuthToken || !userData?.twitterOAuthTokenSecret) {
+      throw new Error('Twitter OAuth tokens not found');
+    }
+
+    const client = new Twitter({
+      consumer_key: process.env.TWITTER_CONSUMER_KEY!,
+      consumer_secret: process.env.TWITTER_CONSUMER_SECRET!,
+      access_token_key: userData.twitterOAuthToken,
+      access_token_secret: userData.twitterOAuthTokenSecret
+    });
+
+    const accessToken = await client.getAccessToken({
+      oauth_verifier: oauth_verifier as string,
+      oauth_token: oauth_token as string
+    });
+
+    await userRef.update({
+      twitterAccessToken: accessToken.oauth_token,
+      twitterAccessTokenSecret: accessToken.oauth_token_secret
+    });
+
+    await db.collection('connected_accounts').add({
+      userId: user.uid,
+      platform: 'twitter',
+      username: accessToken.screen_name
+    });
+
+    res.redirect('/social-media-integration?success=true');
+  } catch (error) {
+    console.error('Error in Twitter auth callback:', error);
+    res.redirect('/social-media-integration?error=true');
+  }
+});
+
+// Add these new endpoints
+app.get('/api/connected-accounts', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { uid } = req.user!;
+    const accountsSnapshot = await db.collection('connected_accounts').where('userId', '==', uid).get();
+    const connectedAccounts = accountsSnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    }));
+    res.json({ connectedAccounts });
+  } catch (error) {
+    console.error('Error fetching connected accounts:', error);
+    res.status(500).json({ error: 'Failed to fetch connected accounts' });
+  }
+});
+
+app.post('/api/connect-account', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { uid } = req.user!;
+    const { platform, username } = req.body;
+    const newAccount = {
+      userId: uid,
+      platform,
+      username,
+      connectedAt: new Date()
+    };
+    const docRef = await db.collection('connected_accounts').add(newAccount);
+    res.status(201).json({ id: docRef.id, ...newAccount });
+  } catch (error) {
+    console.error('Error connecting account:', error);
+    res.status(500).json({ error: 'Failed to connect account' });
+  }
+});
+
+app.delete('/api/connected-accounts/:id', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { uid } = req.user!;
+    const { id } = req.params;
+    const accountRef = db.collection('connected_accounts').doc(id);
+    const doc = await accountRef.get();
+    if (!doc.exists) {
+      return res.status(404).json({ error: 'Account not found' });
+    }
+    if (doc.data()?.userId !== uid) {
+      return res.status(403).json({ error: 'Not authorized to disconnect this account' });
+    }
+    await accountRef.delete();
+    res.json({ message: 'Account disconnected successfully' });
+  } catch (error) {
+    console.error('Error disconnecting account:', error);
+    res.status(500).json({ error: 'Failed to disconnect account' });
+  }
 });
 
 app.listen(port, () => {
