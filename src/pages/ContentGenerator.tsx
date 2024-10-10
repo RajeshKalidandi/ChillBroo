@@ -3,7 +3,6 @@ import { auth, db } from '../firebaseConfig';
 import { collection, addDoc, getDocs } from 'firebase/firestore';
 import ContentFramework from '../components/ContentFramework';
 import ContentRecommendations from '../components/ContentRecommendations';
-import SocialMediaPreview from '../components/SocialMediaPreview';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
 import LoadingSpinner from '../components/LoadingSpinner';
 
@@ -271,7 +270,6 @@ const ContentGenerator: React.FC = () => {
           <div className="bg-gray-100 p-4 rounded">
             <p className="whitespace-pre-wrap">{generatedContent}</p>
           </div>
-          <SocialMediaPreview platform={platform} content={generatedContent} />
           <button
             onClick={saveContent}
             className="mt-4 bg-green-500 text-white p-2 rounded font-semibold hover:bg-green-600 transition duration-300"

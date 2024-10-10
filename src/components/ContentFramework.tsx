@@ -63,7 +63,6 @@ const ContentFramework: React.FC<ContentFrameworkProps> = ({ generatedContent, p
 
   const generateKeywords = async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const idToken = await auth.currentUser?.getIdToken();
       const response = await axios.post(`${API_URL}/api/generate-keywords`, 
@@ -73,41 +72,86 @@ const ContentFramework: React.FC<ContentFrameworkProps> = ({ generatedContent, p
       setKeywords(response.data.keywords);
     } catch (error) {
       console.error('Error generating keywords:', error);
-      setError('Failed to generate keywords. Please try again.');
-      showErrorToast('Failed to generate keywords. Please try again.');
+      // We're not setting an error state or showing a toast for keyword generation failure
     } finally {
       setIsLoading(false);
     }
   };
 
   const renderPreview = () => {
+    const truncatedContent = generatedContent.length > 280 ? generatedContent.slice(0, 277) + '...' : generatedContent;
+
     switch (platform) {
       case 'twitter':
         return (
-          <div className="bg-blue-100 p-4 rounded-lg">
-            <h3 className="font-bold text-blue-500">Twitter Preview</h3>
-            <p className="mt-2">{generatedContent.slice(0, 280)}</p>
+          <div className="bg-white border border-gray-200 rounded-xl p-4 max-w-xl">
+            <div className="mb-2">
+              <p className="font-bold">User Name</p>
+              <p className="text-gray-500">@username</p>
+            </div>
+            <p className="mb-3">{truncatedContent}</p>
+            <div className="flex justify-between text-gray-500">
+              <span>💬 0</span>
+              <span>🔁 0</span>
+              <span>❤️ 0</span>
+              <span>📊 0</span>
+            </div>
           </div>
         );
       case 'facebook':
         return (
-          <div className="bg-indigo-100 p-4 rounded-lg">
-            <h3 className="font-bold text-indigo-500">Facebook Preview</h3>
-            <p className="mt-2">{generatedContent}</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 max-w-xl">
+            <div className="mb-2">
+              <p className="font-bold">User Name</p>
+              <p className="text-xs text-gray-500">Just now · 🌍</p>
+            </div>
+            <p className="mb-3">{generatedContent}</p>
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <div className="flex justify-between text-gray-500">
+                <span>👍 Like</span>
+                <span>💬 Comment</span>
+                <span>↪️ Share</span>
+              </div>
+            </div>
           </div>
         );
       case 'instagram':
         return (
-          <div className="bg-pink-100 p-4 rounded-lg">
-            <h3 className="font-bold text-pink-500">Instagram Preview</h3>
-            <p className="mt-2">{generatedContent}</p>
+          <div className="bg-white border border-gray-200 rounded-lg max-w-sm">
+            <div className="p-3">
+              <p className="font-bold">username</p>
+            </div>
+            <div className="p-3">
+              <p><span className="font-bold mr-2">username</span>{truncatedContent}</p>
+            </div>
+            <div className="p-3 border-t border-gray-200">
+              <div className="flex justify-between mb-2">
+                <div className="flex space-x-4">
+                  <span>❤️</span>
+                  <span>💬</span>
+                  <span>📤</span>
+                </div>
+                <span>🏷️</span>
+              </div>
+            </div>
           </div>
         );
       case 'linkedin':
         return (
-          <div className="bg-blue-200 p-4 rounded-lg">
-            <h3 className="font-bold text-blue-700">LinkedIn Preview</h3>
-            <p className="mt-2">{generatedContent}</p>
+          <div className="bg-white border border-gray-200 rounded-lg p-4 max-w-xl">
+            <div className="mb-2">
+              <p className="font-bold">User Name</p>
+              <p className="text-xs text-gray-500">Job Title at Company</p>
+              <p className="text-xs text-gray-500">Just now · 🌐</p>
+            </div>
+            <p className="mb-3">{generatedContent}</p>
+            <div className="border-t border-gray-200 pt-2 mt-2">
+              <div className="flex justify-between text-gray-500">
+                <span>👍 Like</span>
+                <span>💬 Comment</span>
+                <span>↪️ Share</span>
+              </div>
+            </div>
           </div>
         );
       default:
@@ -165,7 +209,10 @@ const ContentFramework: React.FC<ContentFrameworkProps> = ({ generatedContent, p
           <p>{selectedFramework.useCase}</p>
         </div>
       )}
-      {renderPreview()}
+      <div className="mt-6">
+        <h3 className="text-xl font-semibold mb-4">Content Preview</h3>
+        {renderPreview()}
+      </div>
       {keywords.length > 0 && (
         <div className="mt-6">
           <h3 className="text-lg font-medium mb-2">Suggested Keywords:</h3>

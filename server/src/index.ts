@@ -19,8 +19,8 @@ app.use(express.json());
 
 const MISTRAL_API_KEY = process.env.MISTRAL_API_KEY || 'FevDTL8ljX3Y9UHaLxna9OLCVOmBG8R4';
 const MISTRAL_API_URL = 'https://api.mistral.ai/v1/chat/completions';
-const UPSTAGE_API_KEY = process.env.UPSTAGE_API_KEY || 'your-upstage-api-key';
-const UPSTAGE_API_URL = 'https://api.upstage.ai/v1/solar/chat';
+const UPSTAGE_API_KEY = process.env.UPSTAGE_API_KEY;
+const UPSTAGE_API_URL = 'https://api.upstage.ai/v1/solar/chat/completions';
 
 // Implement rate limiting
 const apiLimiter = rateLimit({
@@ -69,13 +69,15 @@ const verifyToken = async (req: CustomRequest, res: express.Response, next: expr
   }
 };
 
-
 const generateWithUpstage = async (prompt: string): Promise<string> => {
   try {
     const response = await axios.post(
       UPSTAGE_API_URL,
       {
+        model: "solar-pro",
         messages: [{ role: 'user', content: prompt }],
+        max_tokens: 500,
+        stream: false
       },
       {
         headers: {
@@ -131,7 +133,7 @@ const scrapeWebContent = async (query: string): Promise<string> => {
     return scrapedContent.trim();
   } catch (error) {
     console.error('Error scraping web content:', error);
-    return '';
+    return ''; // Return an empty string if scraping fails
   }
 };
 
@@ -143,15 +145,15 @@ const generateContent = async (prompt: string, recentInfo: boolean): Promise<str
       fullPrompt = `Based on the following recent information:\n\n${scrapedContent}\n\nGenerate content for: ${prompt}`;
     }
     
-    // First, try generating content with Upstage
-    const upstageContent = await generateWithUpstage(fullPrompt);
-    if (upstageContent.trim()) {
-      return upstageContent;
+    try {
+      // First, try generating content with Upstage
+      console.log('Generating content with Upstage');
+      return await generateWithUpstage(fullPrompt);
+    } catch (upstageError) {
+      console.log('Upstage generation failed, falling back to Mistral');
+      // If Upstage fails, fall back to Mistral
+      return await generateWithMistral(fullPrompt);
     }
-    
-    // If Upstage fails or returns empty content, fall back to Mistral
-    console.log('Falling back to Mistral for content generation');
-    return await generateWithMistral(fullPrompt);
   } catch (error) {
     console.error('Error generating content:', error);
     throw error;

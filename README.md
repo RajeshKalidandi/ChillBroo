@@ -24,6 +24,8 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ⚡ Rate limiting and usage tracking
 - 🌐 Web scraping for real-time content insights
 - 🔄 Fallback AI model implementation
+- 📱 Social media post previews
+- 🔍 Trending topics integration
 
 ## 🛠️ Tech Stack
 
@@ -82,14 +84,14 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ User authentication with Firebase
 - ✅ Onboarding process for new users
 - ✅ Dashboard with quick action cards and trending topics
-- ✅ Content generation using multiple AI models
+- ✅ Content generation using multiple AI models (Upstage and Mistral)
 - ✅ Dynamic content framework selection
 - ✅ Keyword generation and recommendations
-- ✅ Advanced analytics implementation
+- ✅ Advanced analytics implementation with charts
 - ✅ Social media platform integration (simulated)
-- ✅ User settings and preferences
+- ✅ User settings and preferences management
 - ✅ Responsive design with Tailwind CSS
-- ✅ Template management system
+- ✅ Template management system (predefined and custom templates)
 - ✅ Content preview for different social media platforms
 - ✅ Error handling and user feedback improvements
 - ✅ Team collaboration features
@@ -98,6 +100,9 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ Fallback AI model implementation
 - ✅ Loading spinner for better UX
 - ✅ Toast notifications for user feedback
+- ✅ Trending topics integration in the dashboard
+- ✅ Improved social media post previews
+- ✅ Enhanced content generation with recent information option
 
 ## 🔜 Next Steps
 
@@ -108,6 +113,8 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - [ ] Develop a mobile app version
 - [ ] Implement advanced user roles and permissions
 - [ ] Optimize AI model selection based on content type and performance
+- [ ] Integrate more advanced analytics and reporting features
+- [ ] Implement a content calendar and scheduling system
 
 ## 🤝 Contributing
 
