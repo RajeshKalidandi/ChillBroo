@@ -31,10 +31,9 @@ const ContentGenerator: React.FC = () => {
   const [keywords, setKeywords] = useState('');
   const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
   const [recentInfo, setRecentInfo] = useState(false);
-  const [userCredits, setUserCredits] = useState(0);
   const navigate = useNavigate();
-  const credits = useCredits();
-  const { credits: userCredits, plan } = useSelector((state: RootState) => state.user);
+  const { credits, loading: creditsLoading } = useCredits();
+  const { plan } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     fetchTemplates();
