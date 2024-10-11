@@ -3,7 +3,9 @@ import { Link } from 'react-router-dom';
 import { useCredits } from '../hooks/useCredits';
 
 const CreditStatus: React.FC = () => {
-  const credits = useCredits();
+  const { credits, loading } = useCredits();
+
+  if (loading) return <div>Loading credits...</div>;
 
   if (credits === null) return null;
 

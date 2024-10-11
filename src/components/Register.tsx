@@ -3,11 +3,13 @@ import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import PlanSelection, { Plan } from './PlanSelection';
 
 const Register: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
+  const [selectedPlan, setSelectedPlan] = useState<Plan>('freemium');
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -18,11 +20,12 @@ const Register: React.FC = () => {
 
       await updateProfile(user, { displayName: name });
 
-      // Add user to Firestore with initial 100 credits
+      // Add user to Firestore with initial 100 credits and selected plan
       await setDoc(doc(db, 'users', user.uid), {
         name,
         email,
         credits: 100,
+        plan: selectedPlan,
         createdAt: new Date(),
       });
 
@@ -92,6 +95,8 @@ const Register: React.FC = () => {
               />
             </div>
           </div>
+
+          <PlanSelection selectedPlan={selectedPlan} onSelectPlan={setSelectedPlan} />
 
           <div>
             <button

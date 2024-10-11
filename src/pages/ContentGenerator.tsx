@@ -10,6 +10,8 @@ import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '../components/AuthContext';
 import { useCredits } from '../hooks/useCredits';
 import CreditStatus from '../components/CreditStatus';
+import { useSelector } from 'react-redux';
+import { RootState } from '../store/store';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -32,6 +34,7 @@ const ContentGenerator: React.FC = () => {
   const [userCredits, setUserCredits] = useState(0);
   const navigate = useNavigate();
   const credits = useCredits();
+  const { credits: userCredits, plan } = useSelector((state: RootState) => state.user);
 
   useEffect(() => {
     fetchTemplates();
@@ -99,7 +102,7 @@ const ContentGenerator: React.FC = () => {
   };
 
   const generateContent = async () => {
-    if (credits === null || credits < 10) {
+    if (plan !== 'freemium' && (credits === null || credits < 10)) {
       showErrorToast('Not enough credits. Please purchase more credits to continue.');
       navigate('/pricing');
       return;
@@ -144,8 +147,10 @@ const ContentGenerator: React.FC = () => {
       console.log('Generated content:', data.content);
       setGeneratedContent(data.content);
 
-      // Deduct credits after successful generation
-      await updateCredits(user!.uid, 10);
+      // Deduct credits only for non-freemium users
+      if (plan !== 'freemium') {
+        await updateCredits(user!.uid, 10);
+      }
 
       // Record usage
       await fetch(`${API_URL}/api/record-usage`, {
@@ -157,7 +162,7 @@ const ContentGenerator: React.FC = () => {
         body: JSON.stringify({
           userId: user!.uid,
           action: 'Content Generation',
-          amount: 10
+          amount: plan === 'freemium' ? 0 : 10
         })
       });
 
