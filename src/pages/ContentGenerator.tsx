@@ -8,6 +8,8 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import { useNavigate } from 'react-router-dom';
 import { getFirestore } from 'firebase/firestore';
 import { useAuth } from '../components/AuthContext';
+import { useCredits } from '../hooks/useCredits';
+import CreditStatus from '../components/CreditStatus';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -29,6 +31,7 @@ const ContentGenerator: React.FC = () => {
   const [recentInfo, setRecentInfo] = useState(false);
   const [userCredits, setUserCredits] = useState(0);
   const navigate = useNavigate();
+  const credits = useCredits();
 
   useEffect(() => {
     fetchTemplates();
@@ -88,8 +91,15 @@ const ContentGenerator: React.FC = () => {
     }
   };
 
+  const updateCredits = async (userId: string, amount: number) => {
+    const userRef = doc(db, 'users', userId);
+    await updateDoc(userRef, {
+      credits: increment(-amount)
+    });
+  };
+
   const generateContent = async () => {
-    if (userCredits < 10) {
+    if (credits === null || credits < 10) {
       showErrorToast('Not enough credits. Please purchase more credits to continue.');
       navigate('/pricing');
       return;
@@ -134,12 +144,8 @@ const ContentGenerator: React.FC = () => {
       console.log('Generated content:', data.content);
       setGeneratedContent(data.content);
 
-      // Deduct credits and update usage history
-      const db = getFirestore();
-      const userRef = doc(db, 'users', user!.uid);
-      await updateDoc(userRef, {
-        credits: increment(-10) // Deduct 10 credits for content generation
-      });
+      // Deduct credits after successful generation
+      await updateCredits(user!.uid, 10);
 
       // Record usage
       await fetch(`${API_URL}/api/record-usage`, {
@@ -154,8 +160,6 @@ const ContentGenerator: React.FC = () => {
           amount: 10
         })
       });
-
-      setUserCredits(prevCredits => prevCredits - 10);
 
       showSuccessToast('Content generated successfully!');
     } catch (err) {
@@ -192,9 +196,9 @@ const ContentGenerator: React.FC = () => {
   };
 
   return (
-    <div className="max-w-4xl mx-auto mt-8 bg-white p-8 rounded-lg shadow-md">
-      <h1 className="text-3xl font-bold mb-6 text-center">AI Content Generator</h1>
-      <p className="text-center mb-4">Available Credits: <span className="font-bold text-green-600">{userCredits}</span></p>
+    <div className="max-w-4xl mx-auto mt-8 bg-white dark:bg-gray-800 p-8 rounded-lg shadow-md">
+      <h1 className="text-3xl font-bold mb-6 text-center dark:text-white">AI Content Generator</h1>
+      <CreditStatus />
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div>
           <label htmlFor="platform" className="block mb-2 font-semibold">Platform</label>

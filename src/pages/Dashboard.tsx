@@ -7,6 +7,7 @@ import { collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { fetchWithCache } from '../utils/api'; // Import the fetchWithCache function
 import SkeletonLoader from '../components/SkeletonLoader';
 import { OptimizedImage } from '../components/OptimizedImage'; // Import the OptimizedImage component
+import { useCredits } from '../hooks/useCredits';
 
 const LazyTrendingTopics = lazy(() => import('../components/TrendingTopics'));
 
@@ -27,6 +28,7 @@ const Dashboard: React.FC = () => {
     trendingTopics: []
   });
   const [isLoading, setIsLoading] = useState(true);
+  const credits = useCredits();
 
   useEffect(() => {
     fetchDashboardStats();
@@ -135,6 +137,7 @@ const Dashboard: React.FC = () => {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-6 py-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold mb-4 text-gray-800 dark:text-white animate-fade-in">Welcome to ChillBroo</h1>
+          <p className="text-xl text-gray-600 dark:text-gray-300">Available Credits: {credits !== null ? credits : 'Loading...'}</p>
           
           {isLoading ? <SkeletonLoader /> : (
             <>

@@ -112,46 +112,31 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ Added option to choose between credit card and cryptocurrency payments
 
 - ✅ Implemented credit-based system for content generation
-- ✅ Added Usage dashboard to track credit usage and payment history
-- ✅ Integrated payment processing for credit purchases
-- ✅ Updated Pricing page with credit information and freemium option
-- ✅ Implemented backend endpoints for usage tracking and payment processing
-- ✅ Added credit check before content generation to ensure sufficient balance
-- ✅ Implemented automatic credit deduction for content generation
-- ✅ Enhanced LoadingSpinner component with logo and improved design
-- ✅ Updated Footer component with logo and additional links
-- ✅ Improved ErrorBoundary component with branded error page
-- ✅ Refined Header component with responsive design and user dropdown
-- ✅ Implemented dark mode / light mode toggle with persistent user preference
-- ✅ Updated UI components to support dark mode styling
-- ✅ Improved TrendingTopics component with real-time data fetching
-- ✅ Enhanced ContentCreationResources component with dynamic resource loading
-- ✅ Implemented UserRecommendations component for personalized suggestions
+- ✅ Added 100 free credits for newly registered users
+- ✅ Integrated credit check and automatic deduction in ContentGenerator
+- ✅ Updated Dashboard to display user's available credits
+- ✅ Improved Login and Register components to handle initial credit allocation
+- ✅ Created a useCredits hook for real-time credit tracking across components
+- ✅ Enhanced user experience with credit-aware content generation process
+- ✅ Implemented real-time credit updates using Firestore listeners
+- ✅ Added credit display in the Dashboard for better user awareness
+- ✅ Optimized performance with lazy loading and memoization techniques
+- ✅ Implemented updateCredits function to deduct credits after content generation
+- ✅ Added CreditStatus component to inform users about their credit balance
+- ✅ Integrated low credit warning and purchase option in the UI
+- ✅ Enhanced ContentGenerator to prevent generation when credits are insufficient
 
-## 🚀 Recent Progress
+## 🔜 Upcoming Features
 
-- ✅ Implemented dark mode functionality with system preference detection
-- ✅ Optimized API calls with caching mechanism
-- ✅ Improved responsive design for better mobile experience
-- ✅ Enhanced dashboard layout with full-width design
-- ✅ Implemented lazy loading for better performance
-- ✅ Added error boundary for improved error handling
-- ✅ Optimized images for faster loading
-- ✅ Implemented virtualized lists for handling large datasets
-- ✅ Added theme toggle in the header for easy switching between light and dark modes
-- ✅ Improved accessibility features throughout the application
-
-## 🔜 Next Steps
-
-- [ ] Implement advanced caching mechanisms for API responses
-- [ ] Enhance error handling and logging across the application
-- [ ] Implement user feedback system for content quality improvement
-- [ ] Develop a comprehensive onboarding tutorial for new users
-- [ ] Implement social sharing features for generated content
-- [ ] Enhance accessibility features throughout the application
-- [ ] Implement real-time collaboration features for team accounts
-- [ ] Develop a plugin system for extending application functionality
-- [ ] Implement advanced SEO optimization for generated content
+- [ ] Implement a credit purchase system
+- [ ] Create a detailed usage history page
+- [ ] Develop tiered pricing plans based on credit usage
+- [ ] Implement credit expiration and renewal system
+- [ ] Add credit gifting or transfer feature for team accounts
+- [ ] Develop an affiliate program for credit referrals
+- [ ] Implement credit bonuses for consistent usage or achievements
+- [ ] Create a credit top-up reminder system
+- [ ] Develop a credit usage analytics dashboard for users
 
 ## 🤝 Contributing
 
@@ -176,3 +161,32 @@ For any queries or suggestions, please open an issue or contact us at [your-emai
 ---
 
 Made with ❤️ by [RajeshKalidandi](https://github.com/RajeshKalidandi/)
+
+## 🚀 Latest Updates
+
+- ✅ Implemented a credit-based system for content generation
+- ✅ Added 100 free credits for newly registered users
+- ✅ Integrated credit check and automatic deduction in ContentGenerator
+- ✅ Updated Dashboard to display user's available credits
+- ✅ Improved Login and Register components to handle initial credit allocation
+- ✅ Created a useCredits hook for real-time credit tracking across components
+- ✅ Enhanced user experience with credit-aware content generation process
+- ✅ Implemented real-time credit updates using Firestore listeners
+- ✅ Added credit display in the Dashboard for better user awareness
+- ✅ Optimized performance with lazy loading and memoization techniques
+- ✅ Implemented updateCredits function to deduct credits after content generation
+- ✅ Added CreditStatus component to inform users about their credit balance
+- ✅ Integrated low credit warning and purchase option in the UI
+- ✅ Enhanced ContentGenerator to prevent generation when credits are insufficient
+
+## 🔜 Upcoming Features
+
+- [ ] Implement a credit purchase system
+- [ ] Create a detailed usage history page
+- [ ] Develop tiered pricing plans based on credit usage
+- [ ] Implement credit expiration and renewal system
+- [ ] Add credit gifting or transfer feature for team accounts
+- [ ] Develop an affiliate program for credit referrals
+- [ ] Implement credit bonuses for consistent usage or achievements
+- [ ] Create a credit top-up reminder system
+- [ ] Develop a credit usage analytics dashboard for users
