@@ -67,7 +67,7 @@ const AppContent: React.FC = () => {
               <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
               <Route path="/social-media-integration" element={
                 <ProtectedRoute>
-                  <SocialMediaIntegration />
+                  <SocialMediaIntegration content={{}} />
                 </ProtectedRoute>
               } />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
