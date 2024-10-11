@@ -28,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
+    <header className="bg-white dark:bg-gray-800 text-gray-800 dark:text-white shadow-lg">
       <div className="container mx-auto px-4 py-2">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2">
@@ -37,10 +37,9 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
                 src="/images/logo.png" 
                 alt="ChillBroo Logo" 
                 className="w-full h-full object-contain"
-                style={{ filter: 'drop-shadow(0 0 4px rgba(0, 0, 0, 0.3))' }}
               />
             </div>
-            <span className="text-2xl font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}>ChillBroo</span>
+            <span className="text-2xl font-bold">ChillBroo</span>
           </Link>
           <nav className="hidden md:flex space-x-4 items-center">
             <NavLink to="/pricing">Pricing</NavLink>
@@ -54,13 +53,13 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
-                    className="flex items-center space-x-1 hover:text-blue-200 focus:outline-none"
+                    className="flex items-center space-x-1 hover:text-blue-500 dark:hover:text-blue-300 focus:outline-none"
                   >
                     <span>{user.displayName || user.email}</span>
                     <ChevronDown size={20} />
                   </button>
                   {isDropdownOpen && (
-                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                    <div className="absolute right-0 mt-2 w-48 bg-white dark:bg-gray-700 rounded-md shadow-lg py-1 z-10">
                       <DropdownItem to="/profile" icon={<UserIcon size={18} />}>Profile</DropdownItem>
                       <DropdownItem to="/settings" icon={<Settings size={18} />}>Settings</DropdownItem>
                       <DropdownItem onClick={handleLogout} icon={<LogOut size={18} />}>Logout</DropdownItem>
@@ -76,7 +75,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
             )}
             <button
               onClick={toggleTheme}
-              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200"
               aria-label="Toggle theme"
             >
               {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
@@ -99,7 +98,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
                 <MobileNavLink to="/analytics" onClick={toggleMenu}>Analytics</MobileNavLink>
                 <MobileNavLink to="/profile" onClick={toggleMenu}>Profile</MobileNavLink>
                 <MobileNavLink to="/settings" onClick={toggleMenu}>Settings</MobileNavLink>
-                <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm hover:bg-blue-700">Logout</button>
+                <button onClick={handleLogout} className="block w-full text-left px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700">Logout</button>
               </>
             ) : (
               <>
@@ -115,20 +114,20 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
 };
 
 const NavLink: React.FC<{ to: string; children: React.ReactNode }> = ({ to, children }) => (
-  <Link to={to} className="hover:text-blue-200 transition-colors duration-200">
+  <Link to={to} className="hover:text-blue-500 dark:hover:text-blue-300 transition-colors duration-200">
     {children}
   </Link>
 );
 
 const MobileNavLink: React.FC<{ to: string; onClick: () => void; children: React.ReactNode }> = ({ to, onClick, children }) => (
-  <Link to={to} className="block px-4 py-2 text-sm hover:bg-blue-700" onClick={onClick}>
+  <Link to={to} className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700" onClick={onClick}>
     {children}
   </Link>
 );
 
 const DropdownItem: React.FC<{ to?: string; onClick?: () => void; icon: React.ReactNode; children: React.ReactNode }> = ({ to, onClick, icon, children }) => {
   const content = (
-    <div className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer">
+    <div className="flex items-center px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-100 dark:hover:bg-gray-600 cursor-pointer">
       <span className="mr-2">{icon}</span>
       <span>{children}</span>
     </div>

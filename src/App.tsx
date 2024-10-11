@@ -1,28 +1,30 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { ThemeProvider } from './contexts/ThemeContext';
+import { ThemeProvider, useTheme } from './contexts/ThemeContext';
 import { AuthProvider, useAuth } from './components/AuthContext';
 import './i18n'; // Import i18n configuration
 import Header from './components/Header';
 import Footer from './components/Footer';
-import Dashboard from './pages/Dashboard';
-import ContentGenerator from './pages/ContentGenerator';
-import Templates from './pages/Templates';
-import Settings from './pages/Settings';
-import Analytics from './pages/Analytics';
-import Onboarding from './pages/Onboarding';
-import Pricing from './pages/Pricing';
-import Auth from './pages/Auth';
-import AdvancedAnalytics from './components/AdvancedAnalytics';
-import SocialMediaIntegration from './components/SocialMediaIntegration';
 import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
-import Login from './components/Login';
-import Register from './components/Register';
-import Checkout from './pages/Checkout';
-import Usage from './pages/Usage';
+
+// Lazy load components
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ContentGenerator = lazy(() => import('./pages/ContentGenerator'));
+const Templates = lazy(() => import('./pages/Templates'));
+const Settings = lazy(() => import('./pages/Settings'));
+const Analytics = lazy(() => import('./pages/Analytics'));
+const Onboarding = lazy(() => import('./pages/Onboarding'));
+const Pricing = lazy(() => import('./pages/Pricing'));
+const Auth = lazy(() => import('./pages/Auth'));
+const AdvancedAnalytics = lazy(() => import('./components/AdvancedAnalytics'));
+const SocialMediaIntegration = lazy(() => import('./components/SocialMediaIntegration'));
+const Login = lazy(() => import('./components/Login'));
+const Register = lazy(() => import('./components/Register'));
+const Checkout = lazy(() => import('./pages/Checkout'));
+const Usage = lazy(() => import('./pages/Usage'));
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -41,15 +43,16 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 
 const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
+  const { theme } = useTheme();
 
   return (
-    <Router>
-      <div className="flex flex-col min-h-screen">
-        <Header user={user} />
-        <main className="flex-grow container mx-auto px-4 py-8">
-          {loading ? (
-            <LoadingSpinner />
-          ) : (
+    <div className={`flex flex-col min-h-screen ${theme === 'dark' ? 'dark' : ''}`}>
+      <Header user={user} />
+      <main className="flex-grow w-full bg-background-light dark:bg-background-dark text-text-light dark:text-text-dark">
+        {loading ? (
+          <LoadingSpinner />
+        ) : (
+          <Suspense fallback={<LoadingSpinner />}>
             <Routes>
               <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Onboarding />} />
               <Route path="/auth" element={<Auth />} />
@@ -62,28 +65,34 @@ const AppContent: React.FC = () => {
               <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
               <Route path="/pricing" element={<Pricing />} />
               <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
-              <Route path="/social-media-integration" element={<ProtectedRoute><SocialMediaIntegration /></ProtectedRoute>} />
+              <Route path="/social-media-integration" element={
+                <ProtectedRoute>
+                  <SocialMediaIntegration />
+                </ProtectedRoute>
+              } />
               <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
               <Route path="/usage" element={<ProtectedRoute><Usage /></ProtectedRoute>} />
             </Routes>
-          )}
-        </main>
-        <Footer />
-        <ToastContainer position="bottom-right" autoClose={3000} />
-      </div>
-    </Router>
+          </Suspense>
+        )}
+      </main>
+      <Footer />
+      <ToastContainer position="bottom-right" autoClose={3000} theme={theme} />
+    </div>
   );
 };
 
 const App: React.FC = () => {
   return (
-    <ThemeProvider>
-      <ErrorBoundary>
-        <AuthProvider>
-          <AppContent />
-        </AuthProvider>
-      </ErrorBoundary>
-    </ThemeProvider>
+    <Router>
+      <ThemeProvider>
+        <ErrorBoundary>
+          <AuthProvider>
+            <AppContent />
+          </AuthProvider>
+        </ErrorBoundary>
+      </ThemeProvider>
+    </Router>
   );
 };
 
