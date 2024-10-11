@@ -13,6 +13,17 @@ const firebaseConfig = {
   measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
+// Debug: Log the environment variables (without revealing sensitive information)
+console.log('Firebase Config:', {
+  apiKey: firebaseConfig.apiKey ? 'Set' : 'Not Set',
+  authDomain: firebaseConfig.authDomain ? 'Set' : 'Not Set',
+  projectId: firebaseConfig.projectId ? 'Set' : 'Not Set',
+  storageBucket: firebaseConfig.storageBucket ? 'Set' : 'Not Set',
+  messagingSenderId: firebaseConfig.messagingSenderId ? 'Set' : 'Not Set',
+  appId: firebaseConfig.appId ? 'Set' : 'Not Set',
+  measurementId: firebaseConfig.measurementId ? 'Set' : 'Not Set'
+});
+
 // Check if all required configuration values are present
 const requiredConfigKeys = ['apiKey', 'authDomain', 'projectId', 'storageBucket', 'messagingSenderId', 'appId'];
 const missingKeys = requiredConfigKeys.filter(key => !firebaseConfig[key]);
