@@ -1,4 +1,6 @@
-import React, { Suspense, lazy } from 'react';
+import React from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
 import { BrowserRouter as Router, Route, Routes, Navigate, useLocation } from 'react-router-dom';
 import { ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -84,15 +86,17 @@ const AppContent: React.FC = () => {
 
 const App: React.FC = () => {
   return (
-    <Router>
-      <ThemeProvider>
-        <ErrorBoundary>
-          <AuthProvider>
-            <AppContent />
-          </AuthProvider>
-        </ErrorBoundary>
-      </ThemeProvider>
-    </Router>
+    <Provider store={store}>
+      <Router>
+        <ThemeProvider>
+          <ErrorBoundary>
+            <AuthProvider>
+              <AppContent />
+            </AuthProvider>
+          </ErrorBoundary>
+        </ThemeProvider>
+      </Router>
+    </Provider>
   );
 };
 

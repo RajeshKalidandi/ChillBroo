@@ -3,11 +3,15 @@ import { Link } from 'react-router-dom';
 import { Zap, FileText, BarChart2, TrendingUp, PenTool, Users, Settings } from 'lucide-react';
 import PageTransition from '../components/PageTransition';
 import { auth, db } from '../firebaseConfig';
-import { collection, query, where, getDocs, limit } from 'firebase/firestore';
-import { fetchWithCache } from '../utils/api'; // Import the fetchWithCache function
+import { collection, query, where, getDocs, limit, orderBy, startAfter } from 'firebase/firestore';
+import { fetchWithCache } from '../utils/api';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { OptimizedImage } from '../components/OptimizedImage'; // Import the OptimizedImage component
+import { OptimizedImage } from '../components/OptimizedImage';
 import { useCredits } from '../hooks/useCredits';
+import { useApiCache } from '../hooks/useApiCache';
+import { useDispatch, useSelector } from 'react-redux';
+import { RootState } from '../store/store';
+import { setGeneratedContent, appendGeneratedContent, setLastVisible, setHasMore } from '../store/slices/contentSlice';
 
 const LazyTrendingTopics = lazy(() => import('../components/TrendingTopics'));
 
@@ -19,8 +23,12 @@ interface DashboardStats {
 }
 
 const API_URL = import.meta.env.VITE_API_URL;
+const ITEMS_PER_PAGE = 10;
 
 const Dashboard: React.FC = () => {
+  const dispatch = useDispatch();
+  const { generatedContent, lastVisible, hasMore } = useSelector((state: RootState) => state.content);
+  const { credits } = useSelector((state: RootState) => state.user);
   const [stats, setStats] = useState<DashboardStats>({
     generatedContent: 0,
     activeTemplates: 0,
@@ -28,10 +36,11 @@ const Dashboard: React.FC = () => {
     trendingTopics: []
   });
   const [isLoading, setIsLoading] = useState(true);
-  const credits = useCredits();
+  const { credits: creditsFromHook, loading: creditsLoading } = useCredits();
 
   useEffect(() => {
     fetchDashboardStats();
+    fetchGeneratedContent();
   }, []);
 
   const fetchDashboardStats = async () => {
@@ -79,6 +88,53 @@ const Dashboard: React.FC = () => {
     } catch (error) {
       console.error('Error fetching trending topics:', error);
       return [];
+    }
+  };
+
+  const fetchGeneratedContent = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      const contentQuery = query(
+        collection(db, 'generated_content'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        limit(ITEMS_PER_PAGE)
+      );
+
+      const contentSnapshot = await getDocs(contentQuery);
+      const content = contentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      dispatch(setGeneratedContent(content));
+      dispatch(setLastVisible(contentSnapshot.docs[contentSnapshot.docs.length - 1]));
+      dispatch(setHasMore(contentSnapshot.docs.length === ITEMS_PER_PAGE));
+    } catch (error) {
+      console.error('Error fetching generated content:', error);
+    }
+  };
+
+  const loadMoreContent = async () => {
+    if (!lastVisible) return;
+
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('No authenticated user found');
+
+      const contentQuery = query(
+        collection(db, 'generated_content'),
+        where('userId', '==', user.uid),
+        orderBy('createdAt', 'desc'),
+        startAfter(lastVisible),
+        limit(ITEMS_PER_PAGE)
+      );
+
+      const contentSnapshot = await getDocs(contentQuery);
+      const newContent = contentSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      dispatch(appendGeneratedContent(newContent));
+      dispatch(setLastVisible(contentSnapshot.docs[contentSnapshot.docs.length - 1]));
+      dispatch(setHasMore(contentSnapshot.docs.length === ITEMS_PER_PAGE));
+    } catch (error) {
+      console.error('Error loading more content:', error);
     }
   };
 
@@ -137,7 +193,11 @@ const Dashboard: React.FC = () => {
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="space-y-6 py-6 bg-gradient-to-br from-blue-50 to-purple-50 dark:from-gray-800 dark:to-gray-900 rounded-lg shadow-lg">
           <h1 className="text-4xl font-bold mb-4 text-gray-800 dark:text-white animate-fade-in">Welcome to ChillBroo</h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">Available Credits: {credits !== null ? credits : 'Loading...'}</p>
+          {creditsLoading ? (
+            <p className="text-xl text-gray-600 dark:text-gray-300">Loading credits...</p>
+          ) : (
+            <p className="text-xl text-gray-600 dark:text-gray-300">Available Credits: {credits !== null ? credits : 'N/A'}</p>
+          )}
           
           {isLoading ? <SkeletonLoader /> : (
             <>
@@ -153,6 +213,26 @@ const Dashboard: React.FC = () => {
               <div className="mt-8 animate-fade-in">
                 <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Quick Actions</h2>
                 {MemoizedQuickActions}
+              </div>
+
+              <div className="mt-8 animate-fade-in">
+                <h2 className="text-2xl font-semibold mb-4 text-gray-800 dark:text-white">Generated Content</h2>
+                {generatedContent.map(content => (
+                  <div key={content.id} className="bg-white dark:bg-gray-700 p-4 rounded-lg shadow mb-4">
+                    <p className="text-gray-800 dark:text-white">{content.content}</p>
+                    <p className="text-sm text-gray-500 dark:text-gray-300 mt-2">
+                      Created at: {new Date(content.createdAt.toDate()).toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+                {hasMore && (
+                  <button
+                    onClick={loadMoreContent}
+                    className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 transition-colors"
+                  >
+                    Load More
+                  </button>
+                )}
               </div>
             </>
           )}

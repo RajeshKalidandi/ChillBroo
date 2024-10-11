@@ -3,14 +3,17 @@ import { signInWithEmailAndPassword } from 'firebase/auth';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { auth, db } from '../firebaseConfig';
 import { useNavigate } from 'react-router-dom';
+import { showSuccessToast, showErrorToast } from '../utils/toast';
 
 const Login: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
@@ -28,10 +31,13 @@ const Login: React.FC = () => {
         });
       }
 
+      showSuccessToast('Login successful!');
       navigate('/dashboard');
     } catch (error) {
       console.error('Error logging in:', error);
-      // Handle error (show message to user)
+      showErrorToast('Login failed. Please check your credentials.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
