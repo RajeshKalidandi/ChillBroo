@@ -1,6 +1,6 @@
 # 🚀 ChillBroo - AI-Powered Social Media Content Generator
 
-![ChillBroo Logo](https://your-logo-url-here.com/logo.png)
+![ChillBroo Logo](public/images/logo.png)
 
 [![GitHub license](https://img.shields.io/github/license/RajeshKalidandi/chillbroo.svg)](https://github.com/RajeshKalidandi/chillbroo/blob/main/LICENSE)
 [![GitHub stars](https://img.shields.io/github/stars/RajeshKalidandi/chillbroo.svg)](https://github.com/RajeshKalidandi/chillbroo/stargazers)
