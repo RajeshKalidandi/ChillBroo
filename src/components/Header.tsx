@@ -27,9 +27,19 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
 
   return (
     <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
-      <div className="container mx-auto px-4 py-4">
+      <div className="container mx-auto px-4 py-2">
         <div className="flex justify-between items-center">
-          <Link to="/" className="text-2xl font-bold">ChillBroo</Link>
+          <Link to="/" className="flex items-center space-x-2">
+            <div className="w-12 h-12 relative">
+              <img 
+                src="/images/logo.png" 
+                alt="ChillBroo Logo" 
+                className="w-full h-full object-contain"
+                style={{ filter: 'drop-shadow(0 0 4px rgba(0, 0, 0, 0.3))' }}
+              />
+            </div>
+            <span className="text-2xl font-bold" style={{ textShadow: '1px 1px 2px rgba(0, 0, 0, 0.3)' }}>ChillBroo</span>
+          </Link>
           <nav className="hidden md:flex space-x-4 items-center">
             <NavLink to="/pricing">Pricing</NavLink>
             {user ? (
