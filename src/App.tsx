@@ -39,50 +39,52 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-const App: React.FC = () => {
+const AppContent: React.FC = () => {
   const { user, loading } = useAuth();
 
   return (
+    <Router>
+      <div className="flex flex-col min-h-screen">
+        <Header user={user} />
+        <main className="flex-grow container mx-auto px-4 py-8">
+          {loading ? (
+            <LoadingSpinner />
+          ) : (
+            <Routes>
+              <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Onboarding />} />
+              <Route path="/auth" element={<Auth />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/generate" element={<ProtectedRoute><ContentGenerator /></ProtectedRoute>} />
+              <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
+              <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+              <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
+              <Route path="/pricing" element={<Pricing />} />
+              <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
+              <Route path="/social-media-integration" element={<ProtectedRoute><SocialMediaIntegration /></ProtectedRoute>} />
+              <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+              <Route path="/usage" element={<ProtectedRoute><Usage /></ProtectedRoute>} />
+            </Routes>
+          )}
+        </main>
+        <Footer />
+        <ToastContainer position="bottom-right" autoClose={3000} />
+      </div>
+    </Router>
+  );
+};
+
+const App: React.FC = () => {
+  return (
     <ThemeProvider>
       <ErrorBoundary>
-        <Router>
-          <div className="flex flex-col min-h-screen">
-            <Header user={user} />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              {loading ? (
-                <LoadingSpinner />
-              ) : (
-                <Routes>
-                  <Route path="/" element={user ? <Navigate to="/dashboard" replace /> : <Onboarding />} />
-                  <Route path="/auth" element={<Auth />} />
-                  <Route path="/login" element={<Login />} />
-                  <Route path="/register" element={<Register />} />
-                  <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-                  <Route path="/generate" element={<ProtectedRoute><ContentGenerator /></ProtectedRoute>} />
-                  <Route path="/templates" element={<ProtectedRoute><Templates /></ProtectedRoute>} />
-                  <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
-                  <Route path="/analytics" element={<ProtectedRoute><Analytics /></ProtectedRoute>} />
-                  <Route path="/pricing" element={<Pricing />} />
-                  <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
-                  <Route path="/social-media-integration" element={<ProtectedRoute><SocialMediaIntegration /></ProtectedRoute>} />
-                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
-                  <Route path="/usage" element={<ProtectedRoute><Usage /></ProtectedRoute>} />
-                </Routes>
-              )}
-            </main>
-            <Footer />
-            <ToastContainer position="bottom-right" autoClose={3000} />
-          </div>
-        </Router>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
       </ErrorBoundary>
     </ThemeProvider>
   );
 };
 
-const AppWithAuth: React.FC = () => (
-  <AuthProvider>
-    <App />
-  </AuthProvider>
-);
-
-export default AppWithAuth;
+export default App;

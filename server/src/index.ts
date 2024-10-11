@@ -8,6 +8,7 @@ import cheerio from 'cheerio';
 import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 import * as admin from 'firebase-admin';
+import recommendationsRouter from './routes/recommendations';
 
 dotenv.config();
 
@@ -31,9 +32,6 @@ const apiLimiter = rateLimit({
   legacyHeaders: false,
 });
 
-// Apply rate limiting to all routes
-app.use(apiLimiter);
-
 // Usage tracking middleware
 const trackUsage = async (req: CustomRequest, res: express.Response, next: express.NextFunction) => {
   if (req.user) {
@@ -46,8 +44,14 @@ const trackUsage = async (req: CustomRequest, res: express.Response, next: expre
   next();
 };
 
+// Apply rate limiting to all routes
+app.use(apiLimiter);
+
 // Apply usage tracking to all routes
 app.use(trackUsage);
+
+// Add the recommendations router
+app.use('/api', recommendationsRouter);
 
 interface CustomRequest extends express.Request {
   user?: DecodedIdToken;
@@ -362,15 +366,12 @@ app.post('/api/save-content', verifyToken, async (req: CustomRequest, res: expre
 // Template CRUD operations
 app.get('/api/templates', verifyToken, async (req: CustomRequest, res: express.Response) => {
   try {
-    console.log('Fetching templates for user:', req.user?.uid);
     const { uid } = req.user!;
     const templatesSnapshot = await db.collection('templates').where('userId', '==', uid).get();
-    console.log('Templates snapshot:', templatesSnapshot);
     const templates = templatesSnapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     }));
-    console.log('Sending templates:', templates);
     res.json({ templates });
   } catch (error) {
     console.error('Error fetching templates:', error);
@@ -417,7 +418,8 @@ app.delete('/api/templates/:id', verifyToken, async (req: CustomRequest, res: ex
   }
 });
 
-app.get('/api/content-frameworks', verifyToken, (req: CustomRequest, res: express.Response) => {
+// Make this endpoint public (no authentication required)
+app.get('/api/content-frameworks', (req: express.Request, res: express.Response) => {
   res.json({ frameworks: contentFrameworks });
 });
 
@@ -524,9 +526,25 @@ const generateMockTrendingTopics = () => {
 };
 
 // Endpoint to get trending topics
-app.get('/api/trending-topics', verifyToken, (req: CustomRequest, res: express.Response) => {
-  const trendingTopics = generateMockTrendingTopics();
-  res.json({ trendingTopics });
+app.get('/api/trending-topics', async (req: express.Request, res: express.Response) => {
+  try {
+    const response = await axios.get('https://trends24.in/');
+    const html = response.data;
+    const $ = cheerio.load(html);
+    const trendList: string[] = [];
+
+    $('.trend-card__list li a').each((_, element) => {
+      const trend = $(element).text().trim();
+      if (trend && !trend.startsWith('#')) {
+        trendList.push(trend);
+      }
+    });
+
+    res.json({ trends: trendList.slice(0, 10) });
+  } catch (error) {
+    console.error('Error fetching trending topics:', error);
+    res.status(500).json({ error: 'Failed to fetch trending topics' });
+  }
 });
 
 // Mock OAuth flow
@@ -672,6 +690,21 @@ app.get('/api/user-credits', verifyToken, async (req: CustomRequest, res: expres
   } catch (error) {
     console.error('Error fetching user credits:', error);
     res.status(500).json({ error: 'An error occurred while fetching user credits' });
+  }
+});
+
+app.get('/api/content-resources', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    // For now, let's return some mock data
+    const resources = [
+      { title: "Content Creation 101", url: "https://example.com/content101", source: "Example Blog", type: "article" },
+      { title: "Social Media Strategy Course", url: "https://example.com/smcourse", source: "Online Academy", type: "course" },
+      { title: "Canva", url: "https://www.canva.com", source: "Canva", type: "tool" },
+    ];
+    res.json({ resources });
+  } catch (error) {
+    console.error('Error fetching content resources:', error);
+    res.status(500).json({ error: 'Failed to fetch content resources' });
   }
 });
 

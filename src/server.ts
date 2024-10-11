@@ -1,12 +1,22 @@
 import express from 'express';
 import { spawn } from 'child_process';
+import { verifyToken } from './middleware/auth';
+import rateLimit from 'express-rate-limit';
 
 const app = express();
 const port = process.env.PORT || 3001;
 
 app.use(express.json());
 
-app.post('/api/generate-content', async (req, res) => {
+// Rate limiting
+const apiLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100 // limit each IP to 100 requests per windowMs
+});
+
+app.use(apiLimiter);
+
+app.post('/api/generate-content', verifyToken, async (req, res) => {
   const { prompt } = req.body;
 
   if (!prompt) {

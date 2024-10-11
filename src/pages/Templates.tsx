@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react'
-import { PlusCircle, Edit2, Trash2 } from 'lucide-react'
+import React, { useState, useEffect } from 'react';
+import { PlusCircle, Edit2, Trash2, Search, AlertCircle, Zap, Filter } from 'lucide-react';
 import { auth } from '../firebaseConfig';
 import axios from 'axios';
-import { showErrorToast } from '../utils/toast';
+import { showErrorToast, showSuccessToast } from '../utils/toast';
+import LoadingSpinner from '../components/LoadingSpinner';
+import TemplateManager from '../components/TemplateManager';
+import TrendingTopics from '../components/TrendingTopics';
+import ContentCreationResources from '../components/ContentCreationResources';
+import UserRecommendations from '../components/UserRecommendations';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -17,10 +22,14 @@ interface Template {
 const Templates: React.FC = () => {
   const [templates, setTemplates] = useState<Template[]>([]);
   const [predefinedTemplates, setPredefinedTemplates] = useState<Template[]>([]);
-  const [newTemplate, setNewTemplate] = useState({ name: '', description: '', content: '', platform: 'twitter' });
   const [isAdding, setIsAdding] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<Template | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterPlatform, setFilterPlatform] = useState('all');
+  const [predefinedTemplatesError, setPredefinedTemplatesError] = useState<string | null>(null);
+  const [randomIdea, setRandomIdea] = useState<string | null>(null);
 
   useEffect(() => {
     fetchTemplates();
@@ -37,7 +46,17 @@ const Templates: React.FC = () => {
       setTemplates(response.data.templates);
     } catch (err) {
       console.error('Error fetching templates:', err);
-      showErrorToast('Failed to fetch templates. Please try again.');
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 403) {
+          showErrorToast('You do not have permission to access templates. Please log in or check your account status.');
+        } else if (err.response?.status === 500) {
+          showErrorToast('Server error occurred while fetching templates. Please try again later.');
+        } else {
+          showErrorToast(`Failed to fetch templates: ${err.message}`);
+        }
+      } else {
+        showErrorToast('An unexpected error occurred while fetching templates.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -53,26 +72,45 @@ const Templates: React.FC = () => {
         content: framework.structure,
         platform: 'all'
       })));
+      setPredefinedTemplatesError(null);
     } catch (err) {
       console.error('Error fetching predefined templates:', err);
-      showErrorToast('Failed to fetch predefined templates. Please try again.');
+      if (axios.isAxiosError(err)) {
+        setPredefinedTemplatesError(`Failed to fetch predefined templates: ${err.message}`);
+      } else {
+        setPredefinedTemplatesError('An unexpected error occurred while fetching predefined templates.');
+      }
     }
   };
 
-  const handleAddTemplate = async () => {
-    if (newTemplate.name && newTemplate.description && newTemplate.content) {
-      try {
-        const idToken = await auth.currentUser?.getIdToken();
-        await axios.post(`${API_URL}/api/templates`, newTemplate, {
-          headers: { 'Authorization': `Bearer ${idToken}` }
-        });
-        await fetchTemplates();
-        setNewTemplate({ name: '', description: '', content: '', platform: 'twitter' });
-        setIsAdding(false);
-      } catch (err) {
-        console.error('Error adding template:', err);
-        showErrorToast('Failed to add template. Please try again.');
-      }
+  const handleAddTemplate = async (templateData: Omit<Template, 'id'>) => {
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      await axios.post(`${API_URL}/api/templates`, templateData, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+      await fetchTemplates();
+      setIsAdding(false);
+      showSuccessToast('Template added successfully!');
+    } catch (err) {
+      console.error('Error adding template:', err);
+      showErrorToast('Failed to add template. Please try again.');
+    }
+  };
+
+  const handleEditTemplate = async (templateData: Template) => {
+    try {
+      const idToken = await auth.currentUser?.getIdToken();
+      await axios.put(`${API_URL}/api/templates/${templateData.id}`, templateData, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
+      await fetchTemplates();
+      setIsEditing(false);
+      setEditingTemplate(null);
+      showSuccessToast('Template updated successfully!');
+    } catch (err) {
+      console.error('Error updating template:', err);
+      showErrorToast('Failed to update template. Please try again.');
     }
   };
 
@@ -83,11 +121,18 @@ const Templates: React.FC = () => {
         headers: { 'Authorization': `Bearer ${idToken}` }
       });
       await fetchTemplates();
+      showSuccessToast('Template deleted successfully!');
     } catch (err) {
       console.error('Error deleting template:', err);
       showErrorToast('Failed to delete template. Please try again.');
     }
   };
+
+  const filteredTemplates = templates.filter(template =>
+    (template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    template.description.toLowerCase().includes(searchTerm.toLowerCase())) &&
+    (filterPlatform === 'all' || template.platform === filterPlatform)
+  );
 
   const renderPreview = (content: string, platform: string) => {
     switch (platform.toLowerCase()) {
@@ -129,110 +174,156 @@ const Templates: React.FC = () => {
     }
   };
 
-  if (isLoading) return <div>Loading templates...</div>;
-  if (error) return <div className="text-red-500">{error}</div>;
+  const generateRandomIdea = () => {
+    if (predefinedTemplates.length > 0) {
+      const randomTemplate = predefinedTemplates[Math.floor(Math.random() * predefinedTemplates.length)];
+      const randomTrend = document.querySelector('.trend-card__list li a')?.textContent || 'trending topic';
+      const idea = `${randomTemplate.name} about ${randomTrend}`;
+      setRandomIdea(idea);
+    }
+  };
+
+  if (isLoading) return <LoadingSpinner />;
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold mb-4">Content Templates</h1>
+    <div className="container mx-auto px-4 py-8">
+      <h1 className="text-4xl font-bold mb-8 text-center text-gray-800">Content Templates</h1>
       
-      <div className="flex justify-between items-center">
-        <p className="text-gray-600">Manage your content templates here.</p>
-        <button
-          onClick={() => setIsAdding(true)}
-          className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600"
-        >
-          <PlusCircle className="mr-2" size={20} />
-          Add Template
-        </button>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-8">
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <div className="flex flex-col md:flex-row justify-between items-center mb-6">
+              <div className="relative w-full md:w-auto mb-4 md:mb-0">
+                <input
+                  type="text"
+                  placeholder="Search templates..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-10 pr-4 py-2 w-full md:w-64 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
+              </div>
+              <div className="flex items-center space-x-4">
+                <select
+                  value={filterPlatform}
+                  onChange={(e) => setFilterPlatform(e.target.value)}
+                  className="p-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="all">All Platforms</option>
+                  <option value="twitter">Twitter</option>
+                  <option value="facebook">Facebook</option>
+                  <option value="instagram">Instagram</option>
+                  <option value="linkedin">LinkedIn</option>
+                </select>
+                <button
+                  onClick={() => setIsAdding(true)}
+                  className="flex items-center px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors duration-200"
+                >
+                  <PlusCircle className="mr-2" size={20} />
+                  Add Template
+                </button>
+              </div>
+            </div>
 
-      {isAdding && (
-        <div className="bg-white p-6 rounded-lg shadow-md">
-          <h2 className="text-xl font-semibold mb-4">Add New Template</h2>
-          <input
-            type="text"
-            placeholder="Template Name"
-            value={newTemplate.name}
-            onChange={(e) => setNewTemplate({ ...newTemplate, name: e.target.value })}
-            className="w-full p-2 mb-2 border rounded"
-          />
-          <input
-            type="text"
-            placeholder="Description"
-            value={newTemplate.description}
-            onChange={(e) => setNewTemplate({ ...newTemplate, description: e.target.value })}
-            className="w-full p-2 mb-2 border rounded"
-          />
-          <textarea
-            placeholder="Template Content"
-            value={newTemplate.content}
-            onChange={(e) => setNewTemplate({ ...newTemplate, content: e.target.value })}
-            className="w-full p-2 mb-4 border rounded h-32 resize-none"
-          />
-          <select
-            value={newTemplate.platform}
-            onChange={(e) => setNewTemplate({ ...newTemplate, platform: e.target.value })}
-            className="w-full p-2 mb-4 border rounded"
-          >
-            <option value="twitter">Twitter</option>
-            <option value="facebook">Facebook</option>
-            <option value="instagram">Instagram</option>
-            <option value="linkedin">LinkedIn</option>
-          </select>
-          <div className="flex justify-end">
-            <button
-              onClick={handleAddTemplate}
-              className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 mr-2"
-            >
-              Save
-            </button>
-            <button
-              onClick={() => setIsAdding(false)}
-              className="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      )}
+            {(isAdding || isEditing) && (
+              <TemplateManager
+                template={isEditing ? editingTemplate : null}
+                onSave={(templateData) => {
+                  if (isEditing && editingTemplate) {
+                    handleEditTemplate({ ...templateData, id: editingTemplate.id });
+                  } else {
+                    handleAddTemplate(templateData);
+                  }
+                }}
+                onCancel={() => {
+                  setIsAdding(false);
+                  setIsEditing(false);
+                  setEditingTemplate(null);
+                }}
+              />
+            )}
 
-      <h2 className="text-2xl font-semibold mb-4">Predefined Templates</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {predefinedTemplates.map(template => (
-          <div key={template.id} className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
-            <p className="text-gray-600 mb-4">{template.description}</p>
-            <p className="text-sm text-gray-500 mb-4">{template.content.substring(0, 100)}...</p>
-            {renderPreview(template.content, template.platform)}
-          </div>
-        ))}
-      </div>
-
-      <h2 className="text-2xl font-semibold mb-4">Your Custom Templates</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {templates.map(template => (
-          <div key={template.id} className="bg-white p-6 rounded-lg shadow-md">
-            <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
-            <p className="text-gray-600 mb-4">{template.description}</p>
-            <p className="text-sm text-gray-500 mb-4">{template.content.substring(0, 100)}...</p>
-            {renderPreview(template.content, template.platform)}
-            <div className="flex justify-end mt-4">
-              <button className="text-blue-500 hover:text-blue-600 mr-2">
-                <Edit2 size={20} />
-              </button>
-              <button
-                onClick={() => handleDeleteTemplate(template.id)}
-                className="text-red-500 hover:text-red-600"
-              >
-                <Trash2 size={20} />
-              </button>
+            <h2 className="text-2xl font-semibold mb-4">Your Custom Templates</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredTemplates.map(template => (
+                <div key={template.id} className="bg-gray-50 p-6 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300">
+                  <h3 className="text-xl font-semibold mb-2">{template.name}</h3>
+                  <p className="text-gray-600 mb-4">{template.description}</p>
+                  <div className="mb-4 text-sm text-gray-500 overflow-hidden" style={{maxHeight: '100px'}}>
+                    {template.content}
+                  </div>
+                  {renderPreview(template.content, template.platform)}
+                  <div className="flex justify-end mt-4">
+                    <button
+                      onClick={() => {
+                        setIsEditing(true);
+                        setEditingTemplate(template);
+                      }}
+                      className="text-blue-500 hover:text-blue-600 mr-2"
+                    >
+                      <Edit2 size={20} />
+                    </button>
+                    <button
+                      onClick={() => handleDeleteTemplate(template.id)}
+                      className="text-red-500 hover:text-red-600"
+                    >
+                      <Trash2 size={20} />
+                    </button>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
-        ))}
+
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold mb-4">Predefined Templates</h2>
+            {predefinedTemplatesError ? (
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4 mb-6" role="alert">
+                <div className="flex items-center">
+                  <AlertCircle className="mr-2" size={20} />
+                  <p>{predefinedTemplatesError}</p>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {predefinedTemplates.map(template => (
+                  <div key={template.id} className="bg-gray-50 p-4 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                    <h3 className="text-lg font-semibold mb-2">{template.name}</h3>
+                    <p className="text-gray-600 mb-2 text-sm">{template.description}</p>
+                    <div className="text-xs text-gray-500 mb-2 overflow-hidden" style={{maxHeight: '60px'}}>
+                      {template.content}
+                    </div>
+                    {renderPreview(template.content, template.platform)}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+        
+        <div className="space-y-8">
+          <TrendingTopics />
+          <ContentCreationResources />
+          <UserRecommendations />
+          <div className="bg-white p-6 rounded-lg shadow-md">
+            <h2 className="text-2xl font-semibold mb-4 flex items-center">
+              <Zap className="mr-2" />
+              Random Content Idea
+            </h2>
+            <button
+              onClick={generateRandomIdea}
+              className="w-full bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors duration-200 mb-4"
+            >
+              Generate Idea
+            </button>
+            {randomIdea && (
+              <p className="bg-yellow-100 p-4 rounded-lg">{randomIdea}</p>
+            )}
+          </div>
+        </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
-export default Templates
+export default Templates;

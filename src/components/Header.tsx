@@ -2,7 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { User } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
-import { Menu, X, ChevronDown, LogOut, Settings, User as UserIcon } from 'lucide-react';
+import { Menu, X, ChevronDown, LogOut, Settings, User as UserIcon, Sun, Moon } from 'lucide-react';
+import { useTheme } from '../contexts/ThemeContext';
 
 interface HeaderProps {
   user: User | null;
@@ -12,6 +13,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
   const navigate = useNavigate();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = async () => {
     try {
@@ -26,7 +28,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
   const toggleDropdown = () => setIsDropdownOpen(!isDropdownOpen);
 
   return (
-    <header className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-lg">
+    <header className="bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-gray-800 dark:to-gray-900 text-white shadow-lg">
       <div className="container mx-auto px-4 py-2">
         <div className="flex justify-between items-center">
           <Link to="/" className="flex items-center space-x-2">
@@ -72,6 +74,13 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
                 <NavLink to="/register">Register</NavLink>
               </>
             )}
+            <button
+              onClick={toggleTheme}
+              className="p-2 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200"
+              aria-label="Toggle theme"
+            >
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
           </nav>
           <button className="md:hidden" onClick={toggleMenu}>
             {isMenuOpen ? <X size={24} /> : <Menu size={24} />}

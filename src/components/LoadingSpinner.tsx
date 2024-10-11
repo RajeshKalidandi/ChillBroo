@@ -2,7 +2,7 @@ import React from 'react';
 
 const LoadingSpinner: React.FC = () => {
   return (
-    <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-r from-blue-600 to-indigo-600">
+    <div className="flex flex-col justify-center items-center h-screen bg-gradient-to-r from-blue-600 to-indigo-600 dark:from-gray-800 dark:to-gray-900">
       <img 
         src="/images/logo.png" 
         alt="ChillBroo Logo" 
