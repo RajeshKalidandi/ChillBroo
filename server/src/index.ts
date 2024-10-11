@@ -575,6 +575,106 @@ app.post('/api/refresh-token/:platform', verifyToken, async (req: CustomRequest,
   res.json({ success: true, accessToken: newAccessToken });
 });
 
+// New endpoint for recording usage
+app.post('/api/record-usage', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { userId, action, amount } = req.body;
+    await db.collection('usageHistory').add({
+      userId,
+      date: new Date().toISOString(),
+      action,
+      amount
+    });
+
+    // Update user's credits
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({
+      credits: admin.firestore.FieldValue.increment(-amount)
+    });
+
+    res.status(200).json({ message: 'Usage recorded successfully' });
+  } catch (error) {
+    console.error('Error recording usage:', error);
+    res.status(500).json({ error: 'An error occurred while recording usage' });
+  }
+});
+
+// New endpoint for processing payments
+app.post('/api/process-payment', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const { userId, amount, method, planName } = req.body;
+    
+    // In a real-world scenario, you would integrate with a payment gateway here
+    // For this example, we'll simulate a successful payment
+
+    // Record the payment
+    await db.collection('paymentHistory').add({
+      userId,
+      date: new Date().toISOString(),
+      amount,
+      method,
+      planName
+    });
+
+    // Update user's credits and plan
+    const userRef = db.collection('users').doc(userId);
+    await userRef.update({
+      credits: admin.firestore.FieldValue.increment(amount * 100), // Assuming 1 credit = $0.01
+      plan: planName
+    });
+
+    res.status(200).json({ message: 'Payment processed successfully' });
+  } catch (error) {
+    console.error('Error processing payment:', error);
+    res.status(500).json({ error: 'An error occurred while processing payment' });
+  }
+});
+
+// New endpoint for fetching user usage and payment history
+app.get('/api/user-history', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const userId = req.user!.uid;
+    
+    const usageSnapshot = await db.collection('usageHistory')
+      .where('userId', '==', userId)
+      .orderBy('date', 'desc')
+      .limit(10)
+      .get();
+
+    const paymentSnapshot = await db.collection('paymentHistory')
+      .where('userId', '==', userId)
+      .orderBy('date', 'desc')
+      .limit(10)
+      .get();
+
+    const usageHistory = usageSnapshot.docs.map(doc => doc.data());
+    const paymentHistory = paymentSnapshot.docs.map(doc => doc.data());
+
+    res.status(200).json({ usageHistory, paymentHistory });
+  } catch (error) {
+    console.error('Error fetching user history:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user history' });
+  }
+});
+
+// New endpoint for checking user credits
+app.get('/api/user-credits', verifyToken, async (req: CustomRequest, res: express.Response) => {
+  try {
+    const userId = req.user!.uid;
+    const userDoc = await db.collection('users').doc(userId).get();
+    
+    if (!userDoc.exists) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const userData = userDoc.data();
+    res.status(200).json({ credits: userData?.credits || 0, plan: userData?.plan || 'Free' });
+  } catch (error) {
+    console.error('Error fetching user credits:', error);
+    res.status(500).json({ error: 'An error occurred while fetching user credits' });
+  }
+});
+
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
 });

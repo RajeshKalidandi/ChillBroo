@@ -31,12 +31,14 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
         <div className="flex justify-between items-center">
           <Link to="/" className="text-2xl font-bold">ChillBroo</Link>
           <nav className="hidden md:flex space-x-4 items-center">
+            <NavLink to="/pricing">Pricing</NavLink>
             {user ? (
               <>
                 <NavLink to="/dashboard">Dashboard</NavLink>
                 <NavLink to="/generate">Generate Content</NavLink>
                 <NavLink to="/templates">Templates</NavLink>
                 <NavLink to="/analytics">Analytics</NavLink>
+                <NavLink to="/usage">Usage</NavLink>
                 <div className="relative">
                   <button
                     onClick={toggleDropdown}
@@ -69,6 +71,7 @@ const Header: React.FC<HeaderProps> = ({ user }) => {
       {isMenuOpen && (
         <div className="md:hidden">
           <nav className="px-4 pt-2 pb-4 space-y-2">
+            <MobileNavLink to="/pricing" onClick={toggleMenu}>Pricing</MobileNavLink>
             {user ? (
               <>
                 <MobileNavLink to="/dashboard" onClick={toggleMenu}>Dashboard</MobileNavLink>

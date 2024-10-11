@@ -108,13 +108,23 @@ ChillBroo is a cutting-edge SaaS application that leverages AI to generate and o
 - ✅ Pricing page with tiered plans and annual/monthly options
 - ✅ Error boundary for better error handling
 - ✅ Improved authentication flow with protected routes
+- ✅ Integrated cryptocurrency payments using Coinbase Commerce
+- ✅ Added option to choose between credit card and cryptocurrency payments
+
+- ✅ Implemented credit-based system for content generation
+- ✅ Added Usage dashboard to track credit usage and payment history
+- ✅ Integrated payment processing for credit purchases
+- ✅ Updated Pricing page with credit information and freemium option
+- ✅ Implemented backend endpoints for usage tracking and payment processing
+- ✅ Added credit check before content generation to ensure sufficient balance
+- ✅ Implemented automatic credit deduction for content generation
 
 ## 🔜 Next Steps
 
-- [ ] Implement real OAuth flows for social media platforms
-- [ ] Enhance AI-powered content generation with more customization options
-- [ ] Implement A/B testing for generated content
-- [ ] Add support for more languages and localization
+- [ ] Implement real-time payment verification for cryptocurrency transactions
+- [ ] Add support for multiple cryptocurrencies
+- [ ] Integrate with additional payment gateways for more payment options
+- [ ] Implement subscription management and recurring payments
 - [ ] Develop a mobile app version
 - [ ] Implement advanced user roles and permissions
 - [ ] Optimize AI model selection based on content type and performance

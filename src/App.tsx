@@ -21,6 +21,8 @@ import LoadingSpinner from './components/LoadingSpinner';
 import ErrorBoundary from './components/ErrorBoundary';
 import Login from './components/Login';
 import Register from './components/Register';
+import Checkout from './pages/Checkout';
+import Usage from './pages/Usage';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, loading } = useAuth();
@@ -63,6 +65,8 @@ const App: React.FC = () => {
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/advanced-analytics" element={<ProtectedRoute><AdvancedAnalytics /></ProtectedRoute>} />
                   <Route path="/social-media-integration" element={<ProtectedRoute><SocialMediaIntegration /></ProtectedRoute>} />
+                  <Route path="/checkout" element={<ProtectedRoute><Checkout /></ProtectedRoute>} />
+                  <Route path="/usage" element={<ProtectedRoute><Usage /></ProtectedRoute>} />
                 </Routes>
               )}
             </main>

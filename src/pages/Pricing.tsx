@@ -1,15 +1,38 @@
 import React, { useState } from 'react';
 import { Check, X } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 
 const Pricing: React.FC = () => {
   const [isAnnual, setIsAnnual] = useState(true);
+  const navigate = useNavigate();
 
   const plans = [
+    {
+      name: 'Freemium',
+      monthlyPrice: 0,
+      annualPrice: 0,
+      credits: 100,
+      duration: '30 days',
+      features: [
+        'AI-powered content generation (limited)',
+        'Basic analytics',
+        '1 social media account',
+        '10 posts per month',
+        'Email support',
+      ],
+      notIncluded: [
+        'Advanced analytics',
+        'Team collaboration',
+        'Custom branding',
+        'Priority support',
+      ],
+    },
     {
       name: 'Starter',
       monthlyPrice: 29,
       annualPrice: 290,
+      credits: 1000,
       features: [
         'AI-powered content generation',
         'Basic analytics',
@@ -60,6 +83,11 @@ const Pricing: React.FC = () => {
     },
   ];
 
+  const handleSelectPlan = (planName: string, price: number) => {
+    // Navigate to the checkout page with plan details
+    navigate('/checkout', { state: { planName, price: isAnnual ? price / 12 : price } });
+  };
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
       <h1 className="text-4xl font-bold text-center mb-8">Choose Your Plan</h1>
@@ -105,13 +133,21 @@ const Pricing: React.FC = () => {
                 </span>
                 <span className="text-gray-600">/month</span>
               </div>
-              {isAnnual && (
+              {plan.credits && (
                 <p className="text-green-600 mb-4">
-                  Save ${(plan.monthlyPrice * 12 - plan.annualPrice).toFixed(2)} per year
+                  {plan.credits} credits per month
                 </p>
               )}
-              <button className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300">
-                Get Started
+              {plan.duration && (
+                <p className="text-blue-600 mb-4">
+                  Free for {plan.duration}
+                </p>
+              )}
+              <button 
+                className="w-full bg-blue-600 text-white py-2 rounded-md hover:bg-blue-700 transition duration-300"
+                onClick={() => handleSelectPlan(plan.name, isAnnual ? plan.annualPrice : plan.monthlyPrice)}
+              >
+                Select Plan
               </button>
             </div>
             <div className="bg-gray-50 p-8">

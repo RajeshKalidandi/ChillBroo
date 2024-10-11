@@ -1,14 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { auth, db } from '../firebaseConfig';
-import { collection, addDoc, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDocs, doc, updateDoc, increment } from 'firebase/firestore';
 import ContentFramework from '../components/ContentFramework';
 import ContentRecommendations from '../components/ContentRecommendations';
 import { showSuccessToast, showErrorToast } from '../utils/toast';
 import LoadingSpinner from '../components/LoadingSpinner';
+import { useNavigate } from 'react-router-dom';
+import { getFirestore } from 'firebase/firestore';
+import { useAuth } from '../components/AuthContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ContentGenerator: React.FC = () => {
+  const { user } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [generatedContent, setGeneratedContent] = useState('');
   const [platform, setPlatform] = useState('twitter');
@@ -23,9 +27,12 @@ const ContentGenerator: React.FC = () => {
   const [keywords, setKeywords] = useState('');
   const [templates, setTemplates] = useState<{ id: string; name: string; content: string }[]>([]);
   const [recentInfo, setRecentInfo] = useState(false);
+  const [userCredits, setUserCredits] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchTemplates();
+    fetchUserCredits();
   }, []);
 
   const fetchTemplates = async () => {
@@ -36,6 +43,20 @@ const ContentGenerator: React.FC = () => {
     } catch (error) {
       console.error('Error fetching templates:', error);
       showErrorToast('Failed to fetch templates');
+    }
+  };
+
+  const fetchUserCredits = async () => {
+    try {
+      const user = auth.currentUser;
+      if (user) {
+        const userDoc = await getDocs(doc(db, 'users', user.uid));
+        if (userDoc.exists()) {
+          setUserCredits(userDoc.data().credits || 0);
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user credits:', error);
     }
   };
 
@@ -68,6 +89,12 @@ const ContentGenerator: React.FC = () => {
   };
 
   const generateContent = async () => {
+    if (userCredits < 10) {
+      showErrorToast('Not enough credits. Please purchase more credits to continue.');
+      navigate('/pricing');
+      return;
+    }
+
     if (!selectedFramework) {
       await selectFramework();
     }
@@ -106,9 +133,35 @@ const ContentGenerator: React.FC = () => {
       const data = await response.json();
       console.log('Generated content:', data.content);
       setGeneratedContent(data.content);
+
+      // Deduct credits and update usage history
+      const db = getFirestore();
+      const userRef = doc(db, 'users', user!.uid);
+      await updateDoc(userRef, {
+        credits: increment(-10) // Deduct 10 credits for content generation
+      });
+
+      // Record usage
+      await fetch(`${API_URL}/api/record-usage`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${idToken}`
+        },
+        body: JSON.stringify({
+          userId: user!.uid,
+          action: 'Content Generation',
+          amount: 10
+        })
+      });
+
+      setUserCredits(prevCredits => prevCredits - 10);
+
+      showSuccessToast('Content generated successfully!');
     } catch (err) {
       setError(err.message || 'An error occurred while generating content. Please try again.');
       console.error('Error generating content:', err);
+      showErrorToast(err.message || 'Failed to generate content');
     } finally {
       setIsLoading(false);
     }
@@ -141,6 +194,7 @@ const ContentGenerator: React.FC = () => {
   return (
     <div className="max-w-4xl mx-auto mt-8 bg-white p-8 rounded-lg shadow-md">
       <h1 className="text-3xl font-bold mb-6 text-center">AI Content Generator</h1>
+      <p className="text-center mb-4">Available Credits: <span className="font-bold text-green-600">{userCredits}</span></p>
       <div className="grid grid-cols-2 gap-6 mb-6">
         <div>
           <label htmlFor="platform" className="block mb-2 font-semibold">Platform</label>
