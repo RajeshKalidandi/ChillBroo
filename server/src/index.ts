@@ -9,6 +9,7 @@ import rateLimit from 'express-rate-limit';
 import crypto from 'crypto';
 import * as admin from 'firebase-admin';
 import recommendationsRouter from './routes/recommendations';
+import trendingTopicsRouter from './routes/trendingTopics';
 
 dotenv.config();
 
@@ -26,7 +27,7 @@ const UPSTAGE_API_URL = 'https://api.upstage.ai/v1/solar/chat/completions';
 // Implement rate limiting
 const apiLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 200, // limit each IP to 200 requests per windowMs
   message: 'Too many requests, please try again later.',
   standardHeaders: true,
   legacyHeaders: false,
@@ -52,6 +53,9 @@ app.use(trackUsage);
 
 // Add the recommendations router
 app.use('/api', recommendationsRouter);
+
+// Add the trending topics router
+app.use('/api', trendingTopicsRouter);
 
 interface CustomRequest extends express.Request {
   user?: DecodedIdToken;
@@ -693,9 +697,10 @@ app.get('/api/user-credits', verifyToken, async (req: CustomRequest, res: expres
   }
 });
 
-app.get('/api/content-resources', verifyToken, async (req: CustomRequest, res: express.Response) => {
+// Add a new endpoint for content creation resources
+app.get('/api/content-resources', async (req: CustomRequest, res: express.Response) => {
   try {
-    // For now, let's return some mock data
+    // For now, we'll return some mock data
     const resources = [
       { title: "Content Creation 101", url: "https://example.com/content101", source: "Example Blog", type: "article" },
       { title: "Social Media Strategy Course", url: "https://example.com/smcourse", source: "Online Academy", type: "course" },

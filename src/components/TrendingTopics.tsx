@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { TrendingUp } from 'lucide-react';
+import { auth } from '../firebaseConfig';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -17,7 +18,10 @@ const TrendingTopics: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const response = await axios.get(`${API_URL}/api/trending-topics`);
+      const idToken = await auth.currentUser?.getIdToken();
+      const response = await axios.get(`${API_URL}/api/trending-topics`, {
+        headers: { 'Authorization': `Bearer ${idToken}` }
+      });
       setTrends(response.data.trends);
     } catch (err) {
       console.error('Error fetching trends:', err);
